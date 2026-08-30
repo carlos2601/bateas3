@@ -1,0 +1,960 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Vecinos</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/design-system.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <script src="lib/jspdf.umd.min.js"></script>
+    <script src="lib/jspdf.plugin.autotable.min.js"></script>
+    <style>body { overflow: hidden; }</style>
+    <style>
+        .filter-panel { display:flex; align-items:center; gap:10px; padding:10px 24px; background:var(--bg-secondary,#1e293b); border-bottom:1px solid var(--border-color,#334155); }
+        .filter-panel input,.filter-panel select { padding:8px 14px; border:1px solid var(--border-color,#334155); border-radius:8px; background:var(--bg-primary,#0f172a); color:var(--text-primary,#e2e8f0); font-size:13px; font-family:'Inter',sans-serif; outline:none; }
+        .filter-panel input:focus,.filter-panel select:focus { border-color:var(--accent-primary,#3b82f6); }
+        .filter-panel input::placeholder { color:var(--text-tertiary,#64748b); }
+        .btn-limpiar { padding:8px 16px; border:1px solid var(--border-color,#334155); border-radius:8px; background:var(--bg-tertiary,#334155); color:var(--text-secondary,#94a3b8); cursor:pointer; font-size:13px; font-family:'Inter',sans-serif; font-weight:500; transition:all .2s; }
+        .btn-limpiar:hover { background:var(--accent-primary,#3b82f6); color:#fff; border-color:var(--accent-primary,#3b82f6); }
+        .buttons-row { display:flex; gap:8px; padding:10px 24px; flex-wrap:wrap; background:var(--bg-secondary,#1e293b); border-bottom:1px solid var(--border-color,#334155); }
+        .btn-action { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border:1px solid var(--border-color,#334155); border-radius:8px; background:var(--bg-tertiary,#334155); color:var(--text-secondary,#94a3b8); cursor:pointer; font-size:12px; font-family:'Inter',sans-serif; font-weight:500; transition:all .2s; }
+        .btn-action:hover { background:var(--accent-primary,#3b82f6); color:#fff; border-color:var(--accent-primary,#3b82f6); }
+        .btn-action.btn-primary { background:var(--accent-primary,#3b82f6); color:#fff; border-color:var(--accent-primary,#3b82f6); }
+        .btn-action.btn-primary:hover { background:#2563eb; }
+        .btn-action.btn-success { background:#10b981; color:#fff; border-color:#10b981; }
+        .btn-action.btn-success:hover { background:#059669; }
+        .btn-action.btn-warning { background:#f59e0b; color:#fff; border-color:#f59e0b; }
+        .btn-action.btn-warning:hover { background:#d97706; }
+        .btn-action.btn-danger { background:#ef4444; color:#fff; border-color:#ef4444; }
+        .btn-action.btn-danger:hover { background:#dc2626; }
+        .btn-action.btn-github { background:#24292e; color:#fff; border-color:#24292e; }
+        .btn-action.btn-github:hover { background:#444d56; }
+        .table-container { flex:1; overflow:auto; min-height:200px; padding:0 14px 14px 14px; }
+        .table-container table { border-collapse:collapse; width:100%; table-layout:fixed; min-width:900px; font-size:12px; font-family:'Inter',sans-serif; margin-top:-2px; }
+        .table-container thead th { position:sticky; top:0; z-index:10; background:var(--bg-tertiary,#334155); color:var(--text-primary,#e2e8f0); padding:10px 8px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.5px; border-bottom:2px solid var(--accent-primary,#3b82f6); }
+        .table-container tbody tr { border-bottom:1px solid var(--border-color,#1e293b); transition:background .15s; }
+        .table-container tbody tr:hover { background:var(--bg-tertiary,#1e293b); }
+        .table-container tbody td { padding:8px; color:var(--text-primary,#e2e8f0); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px; cursor:pointer; }
+        .table-container tbody td:focus { outline:2px solid var(--accent-primary,#3b82f6); outline-offset:-2px; }
+        .table-container tbody td input { width:100%; border:2px solid var(--accent-primary,#3b82f6); background:var(--bg-primary,#0f172a); color:var(--text-primary,#e2e8f0); padding:4px 6px; font-size:12px; font-family:'Inter',sans-serif; border-radius:4px; outline:none; }
+        .col-id{width:50px;text-align:center!important} .col-nombre{min-width:200px} .col-cedula{min-width:80px;text-align:right!important} .col-sector{width:60px;text-align:center!important} .col-direccion{min-width:130px} .col-telefono{width:90px;text-align:center!important} .col-fecha{width:100px;text-align:center!important} .col-pagos{width:60px;text-align:center!important} .columna-oculta{display:none}
+        .fila-filtrada{display:none} .fila-sin-nombre{background:rgba(239,68,68,.1)!important} .celda-sin-nombre{background:rgba(239,68,68,.1)!important;color:#ef4444!important;font-weight:700}
+        .sector-select{width:50px;padding:2px 4px;border-radius:4px;border:1px solid var(--border-color,#334155);background:var(--bg-primary,#0f172a);color:var(--text-primary,#e2e8f0);font-size:12px}
+        .sector-display{display:inline-block;font-weight:700}
+        .status-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 24px;background:var(--bg-tertiary,#1e293b);border-top:1px solid var(--border-color,#334155);font-size:11px;color:var(--text-tertiary,#64748b);font-family:'Inter',sans-serif}
+        .modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:9000;align-items:center;justify-content:center}
+        .modal-overlay.active{display:flex}
+        .modal{background:var(--bg-secondary,#1e293b);border:1px solid var(--border-color,#334155);border-radius:12px;width:720px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+        .modal-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border-color,#334155)}
+        .modal-header h2{margin:0;font-size:16px;color:var(--text-primary,#e2e8f0)}
+        .modal-close{background:none;border:none;color:var(--text-tertiary,#64748b);font-size:20px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .2s}
+        .modal-close:hover{background:var(--bg-tertiary,#334155);color:var(--text-primary,#e2e8f0)}
+        .modal-body{padding:20px}
+        .modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:16px 20px;border-top:1px solid var(--border-color,#334155)}
+        .form-group{margin-bottom:14px}
+        .form-group label{display:block;margin-bottom:4px;font-size:12px;font-weight:600;color:var(--text-secondary,#94a3b8);text-transform:uppercase;letter-spacing:.5px}
+        .form-group input,.form-group select{width:100%;padding:8px 12px;border:1px solid var(--border-color,#334155);border-radius:8px;background:var(--bg-primary,#0f172a);color:var(--text-primary,#e2e8f0);font-size:13px;font-family:'Inter',sans-serif;outline:none}
+        .form-group input:focus,.form-group select:focus{border-color:var(--accent-primary,#3b82f6)}
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+        .config-section{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border-color,#1e293b)}
+        .config-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+        .config-section h3{margin:0 0 12px 0;font-size:13px;font-weight:600;color:var(--accent-primary,#3b82f6);text-transform:uppercase;letter-spacing:.5px}
+        .column-config-table{width:100%;border-collapse:collapse;font-size:12px}
+        .column-config-table th{padding:8px;text-align:left;background:var(--bg-tertiary,#334155);color:var(--text-secondary,#94a3b8);font-weight:600;font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--border-color,#334155)}
+        .column-config-table td{padding:6px 8px;color:var(--text-primary,#e2e8f0);border-bottom:1px solid var(--border-color,#1e293b)}
+        .column-config-table input[type=checkbox]{width:auto;margin:0}
+        .column-config-table input[type=number]{width:60px;padding:4px 6px;font-size:12px}
+        .column-config-table select{padding:4px 6px;font-size:12px}
+        .btn-add-column{padding:6px 12px;border:1px dashed var(--accent-primary,#3b82f6);border-radius:6px;background:transparent;color:var(--accent-primary,#3b82f6);cursor:pointer;font-size:12px;font-family:'Inter',sans-serif;margin-top:8px;transition:all .2s}
+        .btn-add-column:hover{background:rgba(59,130,246,.1)}
+        .token-info{font-size:11px;color:var(--text-tertiary,#64748b);margin-top:5px}
+        .token-info a{color:var(--accent-primary,#3b82f6)}
+        .github-status{margin-top:12px;padding:10px;border-radius:8px;font-size:12px}
+        .github-status.connected{background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3)}
+        .github-status.disconnected{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+    </style>
+    <link rel="stylesheet" href="styles/mobile.css">
+</head>
+<body>
+    <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="assets/images/Escudo.png" alt="Escudo" class="sidebar-logo">
+            <div>
+                <div class="sidebar-brand">J.A.C BATEAS 3</div>
+                <div class="sidebar-subtitle">Sector 3 - Puerto Gaitan</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="panel_new.html" class="nav-item"><i class="fas fa-th-large"></i><span>Panel</span></a>
+            <a href="registro_new.html" class="nav-item"><i class="fas fa-user-plus"></i><span>Registro</span></a>
+            <a href="afiliaciones_new.html" class="nav-item"><i class="fas fa-users"></i><span>Afiliaciones</span></a>
+            <a href="certificados5_new.html" class="nav-item"><i class="fas fa-certificate"></i><span>Cert. Afiliacion</span></a>
+            <a class="nav-item active" href="registro_vecinos.html"><i class="fas fa-user-friends"></i><span>Registro Vecinos</span></a>
+            <a class="nav-item" href="carta-vecina.html"><i class="fas fa-scroll"></i><span>Cert Vecino</span></a>
+            <a href="certificados5_copia.html" class="nav-item"><i class="fas fa-file-alt"></i><span>Constancia No Inscripcion</span></a>
+            <a href="traslado_new.html" class="nav-item"><i class="fas fa-exchange-alt"></i><span>Cert. Traslado</span></a>
+            <a href="certificadovotacion_new.html" class="nav-item"><i class="fas fa-vote-yea"></i><span>Cert. Votaciones</span></a>
+            <a href="asistencia_new.html" class="nav-item"><i class="fas fa-clipboard-check"></i><span>Asistencia</span></a>
+            <a href="documentos_new.html" class="nav-item"><i class="fas fa-folder-open"></i><span>Documentos</span></a>
+            <a href="contador_new.html" class="nav-item"><i class="fas fa-chart-line"></i><span>Reporte Pagos</span></a>
+            <a href="informes_new.html" class="nav-item"><i class="fas fa-file-alt"></i><span>Informes</span></a>
+            <a class="nav-item" href="gastos.html"><i class="fas fa-money-bill-wave"></i><span>Gastos</span></a>
+            <a class="nav-item" href="tesoreria.html"><i class="fas fa-wallet"></i><span>Tesoreria</span></a>
+            <a class="nav-item" href="panel_new.html?game=snake"><i class="fas fa-gamepad"></i><span>Culebrita</span></a>
+            <a class="nav-item" href="usuarios_new.html"><i class="fas fa-users-cog"></i><span>Usuarios</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="btn-icon" id="themeToggle" title="Cambiar tema"><i class="fas fa-moon"></i></button>
+            <button class="btn-icon" id="logoutBtn" title="Cerrar sesion"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </aside>
+    <main class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="btn-icon sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+                <h1 class="page-title">REGISTRO DE VECINOS</h1>
+            </div>
+            <div class="topbar-right">
+                <span class="badge badge-outline" id="rowCount"><i class="fas fa-database" style="margin-right:4px"></i><span id="rowCountText">0 registros</span></span>
+                <span class="badge badge-primary" id="folioInfo"><i class="fas fa-map-marker-alt" style="margin-right:4px"></i>Sectores: -</span>
+                <span class="badge badge-outline" id="fechaHoraBadge"><i class="fas fa-clock" style="margin-right:4px"></i><span id="fechaHoraText"></span></span>
+            </div>
+        </header>
+        <div class="filter-panel">
+            <input type="text" id="searchInput" placeholder="Buscar por nombre, cedula, sector, direccion..." autocomplete="off">
+            <select id="filtroColumna" style="flex:0;">
+                <option value="todos">Todos</option>
+                <option value="nombre">Nombre</option>
+                <option value="cedula">Cedula</option>
+                <option value="sector">Sector</option>
+                <option value="direccion">Direccion</option>
+            </select>
+            <button class="btn-limpiar" id="btnLimpiar"><i class="fas fa-times"></i> Limpiar</button>
+            <span id="filtroInfo" style="font-size:11px;color:var(--text-tertiary,#64748b);"></span>
+        </div>
+        <div class="buttons-row">
+            <button class="btn-action btn-github" id="btnConfigGithub" title="Configuracion GitHub"><i class="fas fa-cog"></i> GitHub</button>
+            <button class="btn-action" id="btnCargarGithub" title="Cargar desde GitHub"><i class="fas fa-cloud-download-alt"></i> Cargar GitHub</button>
+            <button class="btn-action btn-success" id="btnGuardarGithub" title="Guardar en GitHub"><i class="fas fa-cloud-upload-alt"></i> Guardar GitHub</button>
+            <button class="btn-action" id="btnNuevo" title="Nuevo registro"><i class="fas fa-plus"></i> Nuevo</button>
+            <button class="btn-action" id="btnJSONLoad" title="Cargar JSON local"><i class="fas fa-file-import"></i> JSON</button>
+            <button class="btn-action btn-success" id="btnDescargar" title="Descargar JSON"><i class="fas fa-download"></i> Descargar</button>
+            <button class="btn-action btn-danger" id="btnPDF" title="Exportar PDF"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button class="btn-action" id="btnUltimo" title="Ir al ultimo"><i class="fas fa-arrow-down"></i> Ultimo</button>
+            <button class="btn-action" id="btnEliminar" title="Eliminar seleccionado" style="background:#dc3545;color:#fff;border-color:#dc3545;"><i class="fas fa-trash-alt"></i> Eliminar</button>
+        </div>
+        <div class="table-container" id="tableContainer">
+            <table id="tablaVecinos">
+                <thead><tr id="tableHeaders"></tr></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <div class="status-bar">
+            <span id="statusArchivo">GitHub: vecinos.json</span>
+            <span id="statusEdicion">Sin cambios</span>
+        </div>
+    </main>
+    </div>
+
+    <input type="file" id="jsonFile" accept=".json" style="display:none">
+    <div id="toast" style="position:fixed;top:80px;right:20px;z-index:99999;min-width:300px;display:none;"></div>
+    <!-- Modal Config GitHub -->
+    <div class="modal-overlay" id="modalGithub">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fab fa-github"></i> Configuracion de GitHub</h2>
+                <button class="modal-close" id="modalCloseGithub"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="config-section">
+                    <h3>Repositorio</h3>
+                    <div class="form-group">
+                        <label>Propietario (Owner)</label>
+                        <input type="text" id="githubOwner" placeholder="Nombre de usuario">
+                    </div>
+                    <div class="form-group">
+                        <label>Repositorio (Repo)</label>
+                        <input type="text" id="githubRepo" placeholder="Nombre del repositorio">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Archivo JSON</label>
+                            <input type="text" id="githubPath" value="vecinos.json">
+                        </div>
+                        <div class="form-group">
+                            <label>Rama (Branch)</label>
+                            <input type="text" id="githubBranch" value="main">
+                        </div>
+                    </div>
+                </div>
+                <div class="config-section">
+                    <h3>Token de Acceso</h3>
+                    <div class="form-group">
+                        <label>Personal Access Token</label>
+                        <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+                        <div class="token-info">Necesitas un <a href="https://github.com/settings/tokens" target="_blank">Personal Access Token</a> con permisos "repo".</div>
+                    </div>
+                </div>
+                <div id="githubStatus" class="github-status disconnected">No conectado a GitHub</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-action" id="btnProbarGithub"><i class="fas fa-plug"></i> Probar</button>
+                <button class="btn-action" id="btnCancelarGithub">Cancelar</button>
+                <button class="btn-action btn-primary" id="btnGuardarConfigGithub"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal PDF Config -->
+    <div class="modal-overlay" id="modalPDF">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Configuracion de Exportacion PDF</h2>
+                <button class="modal-close" id="modalClosePDF"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="config-section">
+                    <h3>Titulos</h3>
+                    <div id="titulosContainer">
+                        <div class="form-group" style="display:flex;gap:8px;align-items:center;">
+                            <input type="text" class="pdf-titulo" value="JUNTA DE ACCION COMUNAL DEL BARRIO BATEAS SECTOR 3" style="flex:1;">
+                            <button class="btn-action btn-danger" style="padding:4px 8px;" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="form-group" style="display:flex;gap:8px;align-items:center;">
+                            <input type="text" class="pdf-titulo" value="PUERTO GAITAN META" style="flex:1;">
+                            <button class="btn-action btn-danger" style="padding:4px 8px;" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                    <button class="btn-action" id="btnAddTitulo"><i class="fas fa-plus"></i> Agregar titulo</button>
+                    <button class="btn-action" id="btnRestaurarTitulos" style="margin-left:6px;"><i class="fas fa-undo"></i> Restaurar</button>
+                </div>
+                <div class="config-section">
+                    <h3>Subtitulos</h3>
+                    <div id="subtitulosContainer">
+                        <div class="form-group" style="display:flex;gap:8px;align-items:center;">
+                            <input type="text" class="pdf-subtitulo" value="REGISTRO DE VECINOS" style="flex:1;">
+                            <button class="btn-action btn-danger" style="padding:4px 8px;" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="form-group" style="display:flex;gap:8px;align-items:center;">
+                            <input type="text" class="pdf-subtitulo" value="BARRIO BATEAS SECTOR 3" style="flex:1;">
+                            <button class="btn-action btn-danger" style="padding:4px 8px;" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="form-group" style="display:flex;gap:8px;align-items:center;">
+                            <input type="text" class="pdf-subtitulo" value="{{fecha}}" style="flex:1;">
+                            <button class="btn-action btn-danger" style="padding:4px 8px;" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                    <button class="btn-action" id="btnAddSubtitulo"><i class="fas fa-plus"></i> Agregar subtitulo</button>
+                    <button class="btn-action" id="btnRestaurarSubtitulos" style="margin-left:6px;"><i class="fas fa-undo"></i> Restaurar</button>
+                </div>
+                <div class="config-section">
+                    <h3>Diseno</h3>
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label>Fuente</label>
+                            <select id="pdfFont"><option value="helvetica" selected>Helvetica</option><option value="times">Times</option><option value="courier">Courier</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Size Titulos</label>
+                            <input type="number" id="pdfTamTitulo" value="16" min="8" max="28">
+                        </div>
+                        <div class="form-group">
+                            <label>Size Tabla</label>
+                            <input type="number" id="pdfTamTabla" value="9" min="6" max="14">
+                        </div>
+                    </div>
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label>Orientacion</label>
+                            <select id="pdfOrientation"><option value="landscape" selected>Paisaje</option><option value="portrait">Retrato</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Margen (mm)</label>
+                            <input type="number" id="pdfMargin" value="15" min="5" max="40">
+                        </div>
+                        <div class="form-group">
+                            <label>Color Titulo</label>
+                            <input type="color" id="pdfTitleColor" value="#1a237e">
+                        </div>
+                    </div>
+                    <div class="form-row-3">
+                        <div class="form-group"><label><input type="checkbox" id="pdfAlternar" checked> Filas alternadas</label></div>
+                        <div class="form-group"><label><input type="checkbox" id="pdfBordes" checked> Bordes celdas</label></div>
+                        <div class="form-group"><label><input type="checkbox" id="pdfNumeracion" checked> Num. consecutiva</label></div>
+                    </div>
+                </div>
+                <div class="config-section">
+                    <h3>Ordenar por</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <select id="pdfSortField">
+                                <option value="ninguno" selected>Sin orden</option>
+                                <option value="nombre">Nombre</option>
+                                <option value="cedula">Cedula</option>
+                                <option value="sector">Sector</option>
+                                <option value="id">ID</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" id="pdfSortDesc"> Descendente</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="config-section">
+                    <h3>Columnas PDF</h3>
+                    <table class="column-config-table">
+                        <thead><tr><th>Act.</th><th>Columna</th><th>Ancho mm</th><th>Alineacion</th></tr></thead>
+                        <tbody id="pdfColumnBody"></tbody>
+                    </table>
+                    <button class="btn-add-column" id="btnAddColumn"><i class="fas fa-plus"></i> Agregar Columna</button>
+                    <div id="customColumnsContainer"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-action" id="btnCancelPDF">Cancelar</button>
+                <button class="btn-action btn-primary" id="btnExportPDF"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Guardar antes de salir -->
+    <div class="modal-overlay" id="modalGuardar" style="z-index:9999;">
+        <div class="modal" style="max-width:400px;">
+            <div class="modal-header"><h2><i class="fas fa-exclamation-triangle" style="color:#dc3545;margin-right:8px;"></i>Cambios sin guardar</h2></div>
+            <div class="modal-body" style="text-align:center;"><p style="color:var(--text-secondary,#94a3b8);font-size:14px;margin:0;">Tiene cambios sin guardar. Debe guardar antes de cambiar de pagina.</p></div>
+            <div class="modal-footer" style="justify-content:center;gap:10px;">
+                <button class="btn-action" id="btnModalCancelar" style="background:#6c757d;color:#fff;border-color:#6c757d;"><i class="fas fa-times"></i> Cancelar</button>
+                <button class="btn-action btn-primary" id="btnModalGuardar"><i class="fas fa-save"></i> Guardar y continuar</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    (function() {
+        // Theme
+        function setupTheme() {
+            var saved = localStorage.getItem('theme') || 'dark';
+            document.documentElement.dataset.theme = saved;
+            updateThemeIcon(saved);
+            document.getElementById('themeToggle').addEventListener('click', function() {
+                var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+                document.documentElement.dataset.theme = next;
+                localStorage.setItem('theme', next);
+                updateThemeIcon(next);
+            });
+            function updateThemeIcon(theme) {
+                document.querySelector('#themeToggle i').className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+        setupTheme();
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            if (confirm('Cerrar sesion?')) window.location.href = 'index_new.html';
+        });
+
+        // Date/time
+        function mostrarFechaYHora() {
+            var now = new Date();
+            var d = now.toLocaleDateString('es-CO', { day:'2-digit', month:'2-digit', year:'numeric' });
+            var t = now.toLocaleTimeString('es-CO', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+            document.getElementById('fechaHoraText').textContent = d + ' ' + t;
+        }
+        mostrarFechaYHora();
+        setInterval(mostrarFechaYHora, 1000);
+
+        // Sidebar toggle
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        });
+
+        // State
+        var jsonData = [];
+        var hasChanges = false;
+        var currentFilter = '';
+        var filtroColumna = 'todos';
+        var columnasPersonalizadas = [];
+        var configAnchoColumnasPDF = {};
+        var celdaActiva = null;
+        var celdaEnEdicion = null;
+        var selectedRowIdx = -1;
+        var originalFileName = 'vecinos.json';
+
+        // Elements
+        var tbody = document.getElementById('tableBody');
+        var searchInput = document.getElementById('searchInput');
+        var filtroCol = document.getElementById('filtroColumna');
+
+        // GitHub config
+        var GITHUB_CONFIG = {
+            token: '',
+            owner: 'carlos2601',
+            repo: 'juntadeaccioncomunalbarriobateaspuertogaitanmetalilianalondo-ogallego1010101010101000111010001010010',
+            path: 'vecinos.json',
+            branch: 'main',
+            apiUrl: ''
+        };
+        var GITHUB_JSON_URL = '';
+
+        function cargarConfigGitHub() {
+            var saved = localStorage.getItem('githubConfig');
+            if (saved) {
+                try {
+                    var config = JSON.parse(saved);
+                    GITHUB_CONFIG = { ...GITHUB_CONFIG, ...config,
+                        owner: 'carlos2601',
+                        repo: 'juntadeaccioncomunalbarriobateaspuertogaitanmetalilianalondo-ogallego1010101010101000111010001010010',
+                        path: 'vecinos.json', branch: 'main'
+                    };
+                    document.getElementById('githubOwner').value = GITHUB_CONFIG.owner;
+                    document.getElementById('githubRepo').value = GITHUB_CONFIG.repo;
+                    document.getElementById('githubPath').value = GITHUB_CONFIG.path;
+                    document.getElementById('githubBranch').value = GITHUB_CONFIG.branch;
+                    document.getElementById('githubToken').value = GITHUB_CONFIG.token || '';
+                    if (GITHUB_CONFIG.owner && GITHUB_CONFIG.repo && GITHUB_CONFIG.path) {
+                        GITHUB_JSON_URL = 'https://raw.githubusercontent.com/' + GITHUB_CONFIG.owner + '/' + GITHUB_CONFIG.repo + '/' + GITHUB_CONFIG.branch + '/' + GITHUB_CONFIG.path;
+                        GITHUB_CONFIG.apiUrl = 'https://api.github.com/repos/' + GITHUB_CONFIG.owner + '/' + GITHUB_CONFIG.repo + '/contents/' + GITHUB_CONFIG.path;
+                    }
+                    actualizarEstadoGitHub();
+                    return true;
+                } catch(e) { return false; }
+            }
+            return false;
+        }
+
+        function abrirConfigGitHub() {
+            document.getElementById('githubOwner').value = GITHUB_CONFIG.owner || '';
+            document.getElementById('githubRepo').value = GITHUB_CONFIG.repo || '';
+            document.getElementById('githubPath').value = GITHUB_CONFIG.path || 'vecinos.json';
+            document.getElementById('githubBranch').value = GITHUB_CONFIG.branch || 'main';
+            document.getElementById('githubToken').value = GITHUB_CONFIG.token || '';
+            actualizarEstadoGitHub();
+            document.getElementById('modalGithub').classList.add('active');
+        }
+
+        function actualizarEstadoGitHub() {
+            var el = document.getElementById('githubStatus');
+            if (GITHUB_CONFIG.token) {
+                el.className = 'github-status connected';
+                el.textContent = 'Conectado a ' + GITHUB_CONFIG.owner + '/' + GITHUB_CONFIG.repo;
+            } else {
+                el.className = 'github-status disconnected';
+                el.textContent = 'No conectado a GitHub';
+            }
+        }
+
+        document.getElementById('btnConfigGithub').addEventListener('click', abrirConfigGitHub);
+        document.getElementById('modalCloseGithub').addEventListener('click', function() { document.getElementById('modalGithub').classList.remove('active'); });
+        document.getElementById('btnCancelarGithub').addEventListener('click', function() { document.getElementById('modalGithub').classList.remove('active'); });
+
+        document.getElementById('btnGuardarConfigGithub').addEventListener('click', function() {
+            var owner = document.getElementById('githubOwner').value.trim();
+            var repo = document.getElementById('githubRepo').value.trim();
+            var path = document.getElementById('githubPath').value.trim();
+            var branch = document.getElementById('githubBranch').value.trim();
+            var token = document.getElementById('githubToken').value.trim();
+            if (!owner || !repo || !token) { mostrarToast('Completa todos los campos', 'warning'); return; }
+            GITHUB_CONFIG = { ...GITHUB_CONFIG, owner: owner, repo: repo, path: path || 'vecinos.json', branch: branch || 'main', token: token };
+            localStorage.setItem('githubConfig', JSON.stringify(GITHUB_CONFIG));
+            GITHUB_JSON_URL = 'https://raw.githubusercontent.com/' + owner + '/' + repo + '/' + (branch||'main') + '/' + (path||'vecinos.json');
+            GITHUB_CONFIG.apiUrl = 'https://api.github.com/repos/' + owner + '/' + repo + '/contents/' + (path||'vecinos.json');
+            mostrarToast('Configuracion guardada', 'success');
+            actualizarEstadoGitHub();
+            document.getElementById('modalGithub').classList.remove('active');
+        });
+
+        document.getElementById('btnProbarGithub').addEventListener('click', function() {
+            var token = document.getElementById('githubToken').value.trim();
+            var owner = document.getElementById('githubOwner').value.trim();
+            var repo = document.getElementById('githubRepo').value.trim();
+            var path = document.getElementById('githubPath').value.trim();
+            var branch = document.getElementById('githubBranch').value.trim();
+            if (!owner || !repo || !token) { mostrarToast('Completa todos los campos', 'warning'); return; }
+            var apiUrl = 'https://api.github.com/repos/' + owner + '/' + repo + '/contents/' + (path||'vecinos.json');
+            mostrarToast('Probando conexion...', 'info');
+            fetch(apiUrl, { headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' } })
+                .then(function(r) { if (r.ok) { mostrarToast('Conexion exitosa', 'success'); document.getElementById('githubStatus').className='github-status connected'; document.getElementById('githubStatus').textContent='Conectado a GitHub'; } else { throw new Error('Error ' + r.status); } })
+                .catch(function(e) { mostrarToast('Error: ' + e.message, 'danger'); document.getElementById('githubStatus').className='github-status disconnected'; document.getElementById('githubStatus').textContent='Error: ' + e.message; });
+        });
+
+        function utf8ToBase64(str) {
+            try { var bytes = new TextEncoder().encode(str); var binary = ''; for (var i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]); return btoa(binary); }
+            catch(e) { return btoa(unescape(encodeURIComponent(str))); }
+        }
+
+        async function guardarEnGitHub() {
+            if (jsonData.length === 0) { mostrarToast('No hay datos', 'warning'); return; }
+            if (!GITHUB_CONFIG.token) { mostrarToast('Configura GitHub primero', 'warning'); abrirConfigGitHub(); return; }
+            try {
+                mostrarToast('Guardando en GitHub...', 'info');
+                var datosParaGuardar = jsonData.map(function(r) {
+                    return { id: r.id||'', nombre: r.nombre||'', cedula: r.cedula?r.cedula.toString().replace(/\D/g,''):'', sector: r.sector||'1', direccion: r.direccion||'', telefono: r.telefono||'', fecha_registro: r.fecha_registro||'', pagos: r.pagos||'' };
+                });
+                var content = JSON.stringify(datosParaGuardar, null, 2);
+                var contentEncoded = utf8ToBase64(content);
+                var sha = null;
+                try {
+                    var resp = await fetch(GITHUB_CONFIG.apiUrl, { headers: { 'Authorization': 'token ' + GITHUB_CONFIG.token, 'Accept': 'application/vnd.github.v3+json' } });
+                    if (resp.ok) { var data = await resp.json(); sha = data.sha; }
+                } catch(e) {}
+                var payload = { message: 'Actualizacion: ' + new Date().toLocaleString(), content: contentEncoded, branch: GITHUB_CONFIG.branch };
+                if (sha) payload.sha = sha;
+                var updateResp = await fetch(GITHUB_CONFIG.apiUrl, { method: 'PUT', headers: { 'Authorization': 'token ' + GITHUB_CONFIG.token, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify(payload) });
+                if (updateResp.ok) { hasChanges = false; actualizarEstado(); mostrarToast('Guardado en GitHub', 'success'); }
+                else { var err = await updateResp.json(); throw new Error(err.message || 'Error'); }
+            } catch(e) { mostrarToast('Error: ' + e.message, 'danger'); }
+        }
+
+        async function cargarDesdeGitHub() {
+            if (!GITHUB_CONFIG.owner || !GITHUB_CONFIG.repo) { mostrarToast('Configura GitHub primero', 'warning'); abrirConfigGitHub(); return; }
+            if (!GITHUB_JSON_URL) { mostrarToast('URL no configurada', 'warning'); return; }
+            try {
+                mostrarToast('Cargando desde GitHub...', 'info');
+                var response = await fetch(GITHUB_JSON_URL);
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                var responseText = await response.text();
+                var data;
+                try { data = JSON.parse(responseText); } catch(pe) { data = JSON.parse(decodeURIComponent(escape(responseText))); }
+                jsonData = data.map(function(r) {
+                    return { id: r.id||obtenerSiguienteID(), nombre: r.nombre||'', cedula: r.cedula||'', sector: r.sector||'1', direccion: r.direccion||'', telefono: r.telefono||r.celular||'', fecha_registro: r.fecha_registro||'', pagos: r.pagos||'' };
+                });
+                jsonData.forEach(function(r) { var n = parseInt(r.id)||0; if (n > ultimoID) ultimoID = n; });
+                document.getElementById('btnDescargar').disabled = false;
+                document.getElementById('btnNuevo').disabled = false;
+                hasChanges = false;
+                actualizarEstado();
+                crearTabla();
+                actualizarContador();
+                actualizarInfoSector();
+                mostrarToast('Cargado desde GitHub (' + jsonData.length + ')', 'success');
+            } catch(e) { mostrarToast('Error: ' + e.message, 'danger'); }
+        }
+
+        document.getElementById('btnCargarGithub').addEventListener('click', cargarDesdeGitHub);
+        document.getElementById('btnGuardarGithub').addEventListener('click', guardarEnGitHub);
+
+        // Helpers
+        var ultimoID = 0;
+        function obtenerSiguienteID() {
+            if (jsonData.length === 0) { ultimoID = 1; return '1'; }
+            var max = 0;
+            jsonData.forEach(function(r) { var n = parseInt(r.id)||0; if (n > max) max = n; });
+            ultimoID = max + 1; return ultimoID.toString();
+        }
+        function formatearCedula(v) { if (!v) return ''; return v.toString().replace(/\D/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+        function actualizarContador() { document.getElementById('rowCountText').textContent = jsonData.length + ' registros'; }
+        function actualizarInfoSector() {
+            if (jsonData.length > 0) {
+                var s1 = jsonData.filter(function(v){return v.sector==='1';}).length;
+                var s2 = jsonData.filter(function(v){return v.sector==='2';}).length;
+                document.getElementById('folioInfo').innerHTML = '<i class="fas fa-map-marker-alt" style="margin-right:4px"></i>Sectores: ' + s1 + ' - ' + s2;
+            } else { document.getElementById('folioInfo').innerHTML = '<i class="fas fa-map-marker-alt" style="margin-right:4px"></i>Sectores: -'; }
+        }
+        function actualizarEstado() {
+            var el = document.getElementById('statusEdicion');
+            if (hasChanges) { el.textContent = 'Cambios sin guardar'; el.style.color = '#f59e0b'; }
+            else { el.textContent = 'Sin cambios'; el.style.color = ''; }
+        }
+        function actualizarBotonGuardar() {
+            if (hasChanges) { document.getElementById('btnGuardarGithub').style.background = '#dc3545'; }
+            else { document.getElementById('btnGuardarGithub').style.background = ''; }
+        }
+        function mostrarToast(texto, tipo) {
+            var el = document.getElementById('toast');
+            var colors = { success:'#10b981', danger:'#ef4444', warning:'#f59e0b', info:'#3b82f6' };
+            el.innerHTML = '<div style="background:'+(colors[tipo]||'#3b82f6')+';color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-family:Inter,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.3);">'+texto+'</div>';
+            el.style.display = 'block';
+            setTimeout(function(){ el.style.display = 'none'; }, 3000);
+        }
+
+        // Table creation
+        function crearTabla() {
+            var headers = document.getElementById('tableHeaders');
+            var body = document.getElementById('tableBody');
+            headers.innerHTML = ''; body.innerHTML = '';
+            if (jsonData.length === 0) return;
+            var columnasBase = [
+                { key:'id', label:'ID', cls:'col-id' },
+                { key:'nombre', label:'NOMBRE COMPLETO', cls:'col-nombre' },
+                { key:'cedula', label:'CEDULA', cls:'col-cedula' },
+                { key:'sector', label:'SECTOR', cls:'col-sector' },
+                { key:'direccion', label:'DIRECCION', cls:'col-direccion' },
+                { key:'telefono', label:'TELEFONO', cls:'col-telefono' },
+                { key:'fecha_registro', label:'FECHA REGISTRO', cls:'col-fecha' }
+            ];
+            var colsCustom = columnasPersonalizadas.map(function(c) { return { key:c.clave, label:c.label, cls:'' }; });
+            var allCols = columnasBase.concat(colsCustom);
+            allCols.forEach(function(col) {
+                if (col.cls === 'columna-oculta') return;
+                var th = document.createElement('th'); th.textContent = col.label; if (col.cls) th.className = col.cls;
+                headers.appendChild(th);
+            });
+            jsonData.forEach(function(item, rowIndex) {
+                var tr = document.createElement('tr'); tr.dataset.rowIndex = rowIndex;
+                var nombreVacio = !item.nombre || item.nombre.trim() === '';
+                if (nombreVacio) tr.classList.add('fila-sin-nombre');
+                allCols.forEach(function(col, ci) {
+                    if (col.cls === 'columna-oculta') return;
+                    var td = document.createElement('td');
+                    td.className = (col.cls || '') + (nombreVacio ? ' celda-sin-nombre' : '');
+                    td.dataset.key = col.key; td.dataset.row = rowIndex; td.dataset.col = ci; td.tabIndex = 0;
+                    td.title = item[col.key] || '';
+                    if (col.key === 'cedula') { td.textContent = formatearCedula(item[col.key]); td.style.textAlign = 'right';
+                        td.addEventListener('click', function(e) { if (celdaEnEdicion === this) return; iniciarEdicion(this); });
+                    }
+                    else if (col.key === 'sector') {
+                        crearSelectSector(item[col.key]||'1', rowIndex, col.key, td);
+                    } else if (col.key === 'fecha_registro') {
+                        td.textContent = item[col.key] || ''; td.style.cursor = 'default';
+                    } else {
+                        td.textContent = item[col.key] || '';
+                        td.addEventListener('click', function(e) { if (celdaEnEdicion === this) return; iniciarEdicion(this); });
+                    }
+                    td.addEventListener('focus', function() { celdaActiva = this; this.style.outline = '2px solid var(--accent-primary,#3b82f6)'; });
+                    td.addEventListener('blur', function() { this.style.outline = ''; });
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+        }
+
+        function crearSelectSector(valorActual, rowIndex, key, celda) {
+            var select = document.createElement('select');
+            select.className = 'sector-select';
+            select.innerHTML = '<option value="1"'+(valorActual==='1'?' selected':'')+'>1</option><option value="2"'+(valorActual==='2'?' selected':'')+'>2</option>';
+            var display = document.createElement('span');
+            display.className = 'sector-display'; display.textContent = valorActual || '1';
+            display.style.color = valorActual === '2' ? '#ef4444' : '#3b82f6';
+            select.style.display = 'none';
+            celda.textContent = ''; celda.appendChild(display); celda.appendChild(select);
+            select.addEventListener('change', function() {
+                var nv = this.value; jsonData[rowIndex][key] = nv;
+                display.textContent = nv; display.style.color = nv==='2'?'#ef4444':'#3b82f6';
+                hasChanges = true; actualizarEstado(); actualizarInfoSector();
+                select.style.display = 'none'; display.style.display = 'inline-block';
+            });
+            select.addEventListener('blur', function() { select.style.display='none'; display.style.display='inline-block'; celdaEnEdicion=null; });
+            select.addEventListener('keydown', function(e) {
+                if (e.key==='Enter'||e.key==='Tab') { e.preventDefault(); this.blur(); if(e.key==='Tab') { e.shiftKey?moverCeldaAnterior():moverSiguienteCelda(); } }
+                else if(e.key==='Escape') { this.blur(); }
+            });
+            celda.addEventListener('click', function(e) { if(e.target!==select) { display.style.display='none'; select.style.display='inline-block'; select.focus(); } });
+        }
+
+        function iniciarEdicion(celda) {
+            if (!celda || celda.dataset.key==='fecha_registro'||celda.dataset.key==='sector') return;
+            if (celdaEnEdicion) finalizarEdicion(celdaEnEdicion);
+            var oldValue = celda.textContent; var key = celda.dataset.key; var row = celda.dataset.row;
+            var input = document.createElement('input'); input.type = 'text'; input.autocomplete = 'off';
+            input.value = key==='cedula'?oldValue.replace(/\./g,''):oldValue;
+            input.style.width='100%'; input.style.height='100%'; input.style.border='none'; input.style.background='transparent'; input.style.outline='none';
+            celda.textContent = ''; celda.appendChild(input); celdaEnEdicion = celda;
+            input.focus(); input.select();
+            function guardar() {
+                var nv = input.value.trim();
+                jsonData[row][key] = key==='cedula'?nv.replace(/\D/g,''):nv;
+                celda.textContent = key==='cedula'?formatearCedula(nv):nv;
+                hasChanges = true; actualizarEstado(); celdaEnEdicion = null;
+            }
+            input.addEventListener('blur', guardar);
+            input.addEventListener('keydown', function(e) {
+                if(e.key==='Enter') { guardar(); moverSiguienteCelda(); }
+                else if(e.key==='Escape') { celda.textContent=key==='cedula'?formatearCedula(oldValue):oldValue; celdaEnEdicion=null; }
+                else if(e.key==='Tab') { e.preventDefault(); guardar(); e.shiftKey?moverCeldaAnterior():moverSiguienteCelda(); }
+            });
+        }
+        function finalizarEdicion(celda) { if(celda&&celda.querySelector('input')){celda.querySelector('input').dispatchEvent(new Event('blur'));} }
+
+        function moverSiguienteCelda() {
+            if(!celdaActiva) return;
+            var row=parseInt(celdaActiva.dataset.row); var totalRows=jsonData.length;
+            var visibles=Array.from(document.querySelectorAll('td[data-row="'+row+'"]')).filter(function(td){return td.dataset.key!=='fecha_registro';});
+            var ci=visibles.indexOf(celdaActiva);
+            if(ci<visibles.length-1) { var nc=visibles[ci+1]; if(nc){nc.focus();if(nc.dataset.key==='sector')nc.click();else iniciarEdicion(nc);} }
+            else if(row<totalRows-1) { var nr=document.querySelectorAll('td[data-row="'+(row+1)+'"]'); var nv=Array.from(nr).filter(function(td){return td.dataset.key!=='fecha_registro';}); if(nv.length>0){nv[0].focus();if(nv[0].dataset.key==='sector')nv[0].click();else iniciarEdicion(nv[0]);} }
+        }
+        function moverCeldaAnterior() {
+            if(!celdaActiva) return;
+            var row=parseInt(celdaActiva.dataset.row);
+            var visibles=Array.from(document.querySelectorAll('td[data-row="'+row+'"]')).filter(function(td){return td.dataset.key!=='fecha_registro';});
+            var ci=visibles.indexOf(celdaActiva);
+            if(ci>0) { var pc=visibles[ci-1]; if(pc){pc.focus();if(pc.dataset.key==='sector')pc.click();else iniciarEdicion(pc);} }
+            else if(row>0) { var pr=document.querySelectorAll('td[data-row="'+(row-1)+'"]'); var pv=Array.from(pr).filter(function(td){return td.dataset.key!=='fecha_registro';}); if(pv.length>0){var last=pv[pv.length-1]; last.focus();if(last.dataset.key==='sector')last.click();else iniciarEdicion(last);} }
+        }
+
+        // Search/filter
+        searchInput.addEventListener('input', function() { currentFilter = searchInput.value.trim().toLowerCase(); aplicarFiltro(); });
+        filtroCol.addEventListener('change', function() { filtroColumna = filtroCol.value; aplicarFiltro(); });
+        document.getElementById('btnLimpiar').addEventListener('click', function() {
+            searchInput.value = ''; currentFilter = ''; filtroColumna = 'todos'; filtroCol.value = 'todos';
+            document.querySelectorAll('#tableBody tr').forEach(function(f){f.classList.remove('fila-filtrada');});
+            document.getElementById('filtroInfo').textContent = '';
+        });
+        function aplicarFiltro() {
+            var term = searchInput.value.trim().toLowerCase();
+            var filas = document.querySelectorAll('#tableBody tr'); var coincidencias = 0;
+            filas.forEach(function(fila) {
+                var celdas = fila.querySelectorAll('td'); var coincide = false;
+                celdas.forEach(function(td) {
+                    var key = td.dataset.key; var val = '';
+                    if (key==='sector') { var d=td.querySelector('.sector-display'); val=d?d.textContent:td.textContent; }
+                    else if (key==='cedula') { val=td.textContent.replace(/\./g,''); }
+                    else { val=td.textContent; }
+                    if (term && val.toLowerCase().indexOf(term)!==-1) { coincide=true; }
+                });
+                if (coincide) { fila.classList.remove('fila-filtrada'); coincidencias++; }
+                else { fila.classList.add('fila-filtrada'); }
+            });
+            document.getElementById('filtroInfo').textContent = term ? coincidencias+' de '+filas.length : '';
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if(e.key==='Tab'&&celdaActiva&&!celdaEnEdicion) { e.preventDefault(); if(celdaActiva.dataset.key!=='fecha_registro'){if(celdaActiva.dataset.key==='sector')celdaActiva.click();else iniciarEdicion(celdaActiva);} }
+            if(e.key==='Enter'&&celdaActiva&&!celdaEnEdicion) { e.preventDefault(); if(celdaActiva.dataset.key!=='fecha_registro'){if(celdaActiva.dataset.key==='sector')celdaActiva.click();else iniciarEdicion(celdaActiva);} }
+            if(e.key==='Delete'&&celdaActiva&&e.target.tagName!=='INPUT'&&e.target.tagName!=='SELECT') {
+                if(confirm('Eliminar esta fila?')) { var ri=parseInt(celdaActiva.dataset.row); jsonData.splice(ri,1); crearTabla(); hasChanges=true; actualizarEstado(); actualizarContador(); actualizarInfoSector(); mostrarToast('Fila eliminada','warning'); }
+            }
+            if(e.ctrlKey&&e.key==='f') { e.preventDefault(); searchInput.focus(); }
+        });
+
+        // New record
+        document.getElementById('btnNuevo').addEventListener('click', function() {
+            var newRow = { id: obtenerSiguienteID(), nombre:'', cedula:'', sector:'1', direccion:'', telefono:'', fecha_registro: new Date().toISOString().split('T')[0], pagos:'' };
+            columnasPersonalizadas.forEach(function(c){ newRow[c.clave]=''; });
+            jsonData.push(newRow); crearTabla(); hasChanges=true; actualizarEstado(); actualizarContador(); actualizarInfoSector();
+            var lastRow = tbody.lastElementChild;
+            if(lastRow) { lastRow.scrollIntoView({behavior:'smooth',block:'center'}); var nc=lastRow.querySelector('td[data-key="nombre"]'); if(nc)setTimeout(function(){iniciarEdicion(nc);},300); }
+        });
+
+        // Delete selected
+        document.getElementById('btnEliminar').addEventListener('click', function() {
+            if(selectedRowIdx<0||selectedRowIdx>=jsonData.length) { mostrarToast('Seleccione una fila primero','warning'); return; }
+            var p=jsonData[selectedRowIdx];
+            if(!confirm('Eliminar registro '+(p.nombre||'(sin nombre)')+'?')) return;
+            jsonData.splice(selectedRowIdx,1); selectedRowIdx=-1; crearTabla(); hasChanges=true; actualizarEstado(); actualizarContador(); actualizarInfoSector();
+        });
+
+        // Row selection
+        tbody.addEventListener('click', function(e) {
+            var tr=e.target.closest('tr'); if(!tr||e.target.closest('input'))return;
+            var prev=tbody.querySelector('tr.selected'); if(prev)prev.classList.remove('selected');
+            tr.classList.add('selected'); selectedRowIdx=parseInt(tr.dataset.rowIndex);
+        });
+
+        // JSON load
+        document.getElementById('btnJSONLoad').addEventListener('click', function(){ document.getElementById('jsonFile').click(); });
+        document.getElementById('jsonFile').addEventListener('change', function(e) {
+            var file=e.target.files[0]; if(!file)return;
+            var reader=new FileReader();
+            reader.onload=function(ev) {
+                try {
+                    var data=JSON.parse(ev.target.result);
+                    if(Array.isArray(data)) {
+                        jsonData=data.map(function(r){return{id:r.id||obtenerSiguienteID(),nombre:r.nombre||'',cedula:r.cedula||'',sector:r.sector||'1',direccion:r.direccion||'',telefono:r.telefono||r.celular||'',fecha_registro:r.fecha_registro||'',pagos:r.pagos||''};});
+                        originalFileName=file.name;
+                        hasChanges=true; actualizarEstado(); crearTabla(); actualizarContador(); actualizarInfoSector();
+                        mostrarToast('JSON cargado ('+jsonData.length+')','success');
+                    }
+                } catch(err) { mostrarToast('Error al leer JSON','danger'); }
+            }; reader.readAsText(file); e.target.value='';
+        });
+
+        // Download
+        document.getElementById('btnDescargar').addEventListener('click', function() {
+            if(jsonData.length===0)return;
+            var datos= jsonData.map(function(r){return{id:r.id||'',nombre:r.nombre||'',cedula:r.cedula?r.cedula.toString().replace(/\D/g,''):'',sector:r.sector||'1',direccion:r.direccion||'',telefono:r.telefono||'',fecha_registro:r.fecha_registro||'',pagos:r.pagos||''};});
+            var blob=new Blob([JSON.stringify(datos,null,2)],{type:'application/json'});
+            var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download=originalFileName||'vecinos.json'; a.click(); URL.revokeObjectURL(url);
+            mostrarToast('JSON descargado','success');
+        });
+
+        // Scroll to last
+        document.getElementById('btnUltimo').addEventListener('click', function() { var lr=tbody.lastElementChild; if(lr)lr.scrollIntoView({behavior:'smooth',block:'center'}); });
+
+        // PDF Config Modal
+        document.getElementById('btnPDF').addEventListener('click', function() {
+            if(jsonData.length===0){mostrarToast('Primero carga datos','warning');return;}
+            renderPdfColumnTable(); document.getElementById('modalPDF').classList.add('active');
+        });
+        document.getElementById('modalClosePDF').addEventListener('click', function(){document.getElementById('modalPDF').classList.remove('active');});
+        document.getElementById('btnCancelPDF').addEventListener('click', function(){document.getElementById('modalPDF').classList.remove('active');});
+
+        function renderPdfColumnTable() {
+            var body = document.getElementById('pdfColumnBody'); body.innerHTML='';
+            var columnasBase = [
+                {key:'id',label:'ID',ancho:12,alineacion:'center'},
+                {key:'nombre',label:'NOMBRE COMPLETO',ancho:85,alineacion:'left'},
+                {key:'cedula',label:'CEDULA',ancho:35,alineacion:'right'},
+                {key:'sector',label:'SECTOR',ancho:20,alineacion:'center'},
+                {key:'direccion',label:'DIRECCION',ancho:50,alineacion:'left'},
+                {key:'telefono',label:'TELEFONO',ancho:35,alineacion:'center'},
+                {key:'fecha_registro',label:'FECHA REGISTRO',ancho:35,alineacion:'center'}
+            ];
+            var allCols = columnasBase.concat(columnasPersonalizadas.map(function(c){return{key:c.clave,label:c.label,ancho:30,alineacion:'center'};}));
+            allCols.forEach(function(col, i) {
+                if(!configAnchoColumnasPDF[col.key]) configAnchoColumnasPDF[col.key]={activa:true,ancho:col.ancho||30,alineacion:col.alineacion||'center'};
+                var cfg=configAnchoColumnasPDF[col.key];
+                var tr=document.createElement('tr');
+                tr.innerHTML='<td><input type="checkbox" '+(cfg.activa?'checked':'')+' data-pk="'+col.key+'" class="pdf-col-cb"></td>'
+                    +'<td>'+col.label+'</td>'
+                    +'<td><input type="number" value="'+cfg.ancho+'" min="5" max="100" data-pk="'+col.key+'" class="pdf-col-width" style="width:60px;padding:4px;font-size:12px;background:var(--bg-primary,#0f172a);color:var(--text-primary,#e2e8f0);border:1px solid var(--border-color,#334155);border-radius:4px;"></td>'
+                    +'<td><select data-pk="'+col.key+'" class="pdf-col-align" style="padding:4px;font-size:12px;background:var(--bg-primary,#0f172a);color:var(--text-primary,#e2e8f0);border:1px solid var(--border-color,#334155);border-radius:4px;"><option value="left"'+(cfg.alineacion==='left'?' selected':'')+'>Izq</option><option value="center"'+(cfg.alineacion==='center'?' selected':'')+'>Centro</option><option value="right"'+(cfg.alineacion==='right'?' selected':'')+'>Der</option></select></td>';
+                body.appendChild(tr);
+            });
+            columnasPersonalizadas.forEach(function(col,i){
+                if(!configAnchoColumnasPDF[col.clave]) configAnchoColumnasPDF[col.clave]={activa:true,ancho:30,alineacion:'center'};
+                var cfg=configAnchoColumnasPDF[col.clave];
+                var tr=document.createElement('tr');
+                tr.innerHTML='<td><input type="checkbox" '+(cfg.activa?'checked':'')+' data-pk="'+col.clave+'" class="pdf-col-cb"></td>'
+                    +'<td><input type="text" value="'+col.label+'" data-cci="'+i+'" class="cc-label-input" style="width:100px;padding:4px;font-size:12px;background:var(--bg-primary,#0f172a);color:var(--text-primary,#e2e8f0);border:1px solid var(--border-color,#334155);border-radius:4px;"></td>'
+                    +'<td><input type="number" value="'+cfg.ancho+'" min="5" max="100" data-pk="'+col.clave+'" class="pdf-col-width" style="width:60px;padding:4px;font-size:12px;background:var(--bg-primary,#0f172a);color:var(--text-primary,#e2e8f0);border:1px solid var(--border-color,#334155);border-radius:4px;"></td>'
+                    +'<td><select data-pk="'+col.clave+'" class="pdf-col-align" style="padding:4px;font-size:12px;background:var(--bg-primary,#0f172a);color:var(--text-primary,#e2e8f0);border:1px solid var(--border-color,#334155);border-radius:4px;"><option value="left"'+(cfg.alineacion==='left'?' selected':'')+'>Izq</option><option value="center"'+(cfg.alineacion==='center'?' selected':'')+'>Centro</option><option value="right"'+(cfg.alineacion==='right'?' selected':'')+'>Der</option></select></td>';
+                body.appendChild(tr);
+            });
+        }
+
+        document.getElementById('pdfColumnBody').addEventListener('change', function(e) {
+            var t=e.target; var pk=t.dataset.pk;
+            if(t.classList.contains('pdf-col-cb')) { configAnchoColumnasPDF[pk].activa=t.checked; }
+            else if(t.classList.contains('pdf-col-width')) { configAnchoColumnasPDF[pk].ancho=parseInt(t.value)||30; }
+            else if(t.classList.contains('pdf-col-align')) { configAnchoColumnasPDF[pk].alineacion=t.value; }
+            else if(t.classList.contains('cc-label-input')) { var ci=parseInt(t.dataset.cci); columnasPersonalizadas[ci].label=t.value; }
+        });
+
+        var customColumnCount = 0;
+        document.getElementById('btnAddColumn').addEventListener('click', function() {
+            var nombre=prompt('Nombre de la columna:'); if(!nombre)return;
+            var clave=nombre.toLowerCase().replace(/\s/g,'_');
+            if(columnasPersonalizadas.some(function(c){return c.clave===clave;})){mostrarToast('Ya existe','warning');return;}
+            columnasPersonalizadas.push({clave:clave,label:nombre.toUpperCase()});
+            configAnchoColumnasPDF[clave]={activa:true,ancho:30,alineacion:'center'};
+            jsonData.forEach(function(r){r[clave]='';});
+            renderPdfColumnTable(); crearTabla(); hasChanges=true; actualizarEstado();
+            mostrarToast('Columna "'+nombre+'" agregada','success');
+        });
+
+        // Titulos/subtitulos
+        document.getElementById('btnAddTitulo').addEventListener('click', function() {
+            var div=document.createElement('div'); div.className='form-group'; div.style.cssText='display:flex;gap:8px;align-items:center;';
+            div.innerHTML='<input type="text" class="pdf-titulo" placeholder="Nuevo titulo" style="flex:1;"><button class="btn-action btn-danger" style="padding:4px 8px;" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>';
+            document.getElementById('titulosContainer').appendChild(div);
+        });
+        document.getElementById('btnRestaurarTitulos').addEventListener('click', function() {
+            document.getElementById('titulosContainer').innerHTML='<div class="form-group" style="display:flex;gap:8px;align-items:center;"><input type="text" class="pdf-titulo" value="JUNTA DE ACCION COMUNAL DEL BARRIO BATEAS SECTOR 3" style="flex:1;"><button class="btn-action btn-danger" style="padding:4px 8px;" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div><div class="form-group" style="display:flex;gap:8px;align-items:center;"><input type="text" class="pdf-titulo" value="PUERTO GAITAN META" style="flex:1;"><button class="btn-action btn-danger" style="padding:4px 8px;" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div>';
+        });
+        document.getElementById('btnAddSubtitulo').addEventListener('click', function() {
+            var div=document.createElement('div'); div.className='form-group'; div.style.cssText='display:flex;gap:8px;align-items:center;';
+            div.innerHTML='<input type="text" class="pdf-subtitulo" placeholder="Nuevo subtitulo" style="flex:1;"><button class="btn-action btn-danger" style="padding:4px 8px;" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>';
+            document.getElementById('subtitulosContainer').appendChild(div);
+        });
+        document.getElementById('btnRestaurarSubtitulos').addEventListener('click', function() {
+            document.getElementById('subtitulosContainer').innerHTML='<div class="form-group" style="display:flex;gap:8px;align-items:center;"><input type="text" class="pdf-subtitulo" value="REGISTRO DE VECINOS" style="flex:1;"><button class="btn-action btn-danger" style="padding:4px 8px;" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div><div class="form-group" style="display:flex;gap:8px;align-items:center;"><input type="text" class="pdf-subtitulo" value="BARRIO BATEAS SECTOR 3" style="flex:1;"><button class="btn-action btn-danger" style="padding:4px 8px;" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div><div class="form-group" style="display:flex;gap:8px;align-items:center;"><input type="text" class="pdf-subtitulo" value="{{fecha}}" style="flex:1;"><button class="btn-action btn-danger" style="padding:4px 8px;" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div>';
+        });
+
+        // PDF Export
+        document.getElementById('btnExportPDF').addEventListener('click', function() {
+            var jsPDF = window.jspdf ? window.jspdf.jsPDF : null;
+            if(!jsPDF){mostrarToast('jsPDF no cargado','danger');return;}
+            var orientation = document.getElementById('pdfOrientation').value;
+            var font = document.getElementById('pdfFont').value;
+            var tamTitulo = parseInt(document.getElementById('pdfTamTitulo').value)||16;
+            var tamTabla = parseInt(document.getElementById('pdfTamTabla').value)||9;
+            var margin = parseInt(document.getElementById('pdfMargin').value)||15;
+            var titleColor = document.getElementById('pdfTitleColor').value;
+            var alternar = document.getElementById('pdfAlternar').checked;
+            var bordes = document.getElementById('pdfBordes').checked;
+            var numeracion = document.getElementById('pdfNumeracion').checked;
+            var sortField = document.getElementById('pdfSortField').value;
+            var sortDesc = document.getElementById('pdfSortDesc').checked;
+
+            var titulos = Array.from(document.querySelectorAll('.pdf-titulo')).map(function(i){return i.value.trim();}).filter(function(t){return t!=='';});
+            var subtitulos = Array.from(document.querySelectorAll('.pdf-subtitulo')).map(function(i){
+                var t=i.value.trim();
+                if(t.indexOf('{{fecha}}')!==-1) { var f=new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'}); t=t.replace('{{fecha}}',f); }
+                return t;
+            }).filter(function(t){return t!=='';});
+
+            var datosFiltrados = jsonData.filter(function(r){return r.nombre&&r.nombre.trim()!==''&&r.cedula&&r.cedula.toString().trim()!=='';});
+            if(datosFiltrados.length===0){mostrarToast('Sin registros validos','warning');return;}
+
+            var datos = datosFiltrados.map(function(r){return Object.assign({},r,{cedula:formatearCedula(r.cedula)});});
+            if(sortField!=='ninguno') {
+                datos.sort(function(a,b){
+                    var va=a[sortField]||''; var vb=b[sortField]||'';
+                    if(sortField==='cedula'){va=parseInt(va.replace(/\./g,''))||0; vb=parseInt(vb.replace(/\./g,''))||0;}
+                    if(va<vb)return sortDesc?1:-1; if(va>vb)return sortDesc?-1:1; return 0;
+                });
+            }
+
+            var columnasPDF=[];
+            var columnasBase=[{key:'id',label:'ID'},{key:'nombre',label:'NOMBRE COMPLETO'},{key:'cedula',label:'CEDULA'},{key:'sector',label:'SECTOR'},{key:'direccion',label:'DIRECCION'},{key:'telefono',label:'TELEFONO'},{key:'fecha_registro',label:'FECHA REGISTRO'}];
+            var allCols = columnasBase.concat(columnasPersonalizadas.map(function(c){return{key:c.clave,label:c.label};}));
+            allCols.forEach(function(col){
+                var cfg=configAnchoColumnasPDF[col.key];
+                if(cfg&&cfg.activa) columnasPDF.push({header:col.label,dataKey:col.key,width:cfg.ancho||30});
+            });
+            if(numeracion) { columnasPDF.unshift({header:'N',dataKey:'numero_consecutivo',width:12}); datos=datos.map(function(r,i){var o=Object.assign({},{numero_consecutivo:(i+1).toString()}); return Object.assign(o,r);}); }
+
+            var doc = new jsPDF({orientation:orientation,unit:'mm',format:'letter'});
+            var pageW=doc.internal.pageSize.getWidth(); var pageH=doc.internal.pageSize.getHeight();
+            var startY=margin;
+            doc.setFontSize(tamTitulo); doc.setFont(font,'bold');
+            titulos.forEach(function(t){doc.text(t,pageW/2,startY,{align:'center'}); startY+=tamTitulo*0.5;});
+            doc.setFontSize(tamTitulo-2); doc.setFont(font,'normal');
+            subtitulos.forEach(function(t){doc.text(t,pageW/2,startY,{align:'center'}); startY+=(tamTitulo-2)*0.5;});
+            startY+=4;
+
+            var colStyles={};
+            allCols.forEach(function(col){
+                var cfg=configAnchoColumnasPDF[col.key];
+                if(cfg&&cfg.activa) colStyles[col.key]={halign:cfg.alineacion||'center',cellWidth:cfg.ancho||30};
+            });
+            if(numeracion) colStyles['numero_consecutivo']={halign:'center',cellWidth:12};
+
+            doc.autoTable({columns:columnasPDF,body:datos,startY:startY,
+                styles:{fontSize:tamTabla,cellPadding:2,font:font,textColor:[0,0,0],lineColor:bordes?[200,200,200]:[255,255,255],lineWidth:bordes?0.1:0,fillColor:[255,255,255]},
+                headStyles:{fillColor:[220,230,250],textColor:[0,0,0],fontStyle:'bold',fontSize:tamTabla+1,lineColor:bordes?[200,200,255]:[255,255,255],lineWidth:bordes?0.1:0},
+                alternateRowStyles:alternar?{fillColor:[245,247,250]}:{fillColor:[255,255,255]},
+                columnStyles:colStyles,tableWidth:'auto',showHead:'everyPage',
+                margin:{top:10,left:15,right:15,bottom:15},
+                didDrawPage:function(d){if(d.pageNumber>1)d.settings.margin.top=10;}
+            });
+
+            var totalPages=doc.internal.getNumberOfPages();
+            for(var i=1;i<=totalPages;i++){doc.setPage(i);doc.setFontSize(8);doc.text('Pagina '+i+' de '+totalPages,pageW-margin,pageH-8,{align:'right'});}
+            doc.save((originalFileName||'vecinos').replace('.json','')+'.pdf');
+            document.getElementById('modalPDF').classList.remove('active');
+            mostrarToast('PDF generado','success');
+        });
+
+        // Navigation guard
+        var destinoPendiente='';
+        document.querySelectorAll('.nav-item').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                if(hasChanges) { e.preventDefault(); e.stopPropagation(); destinoPendiente=item.href; document.getElementById('modalGuardar').classList.add('active'); return false; }
+            });
+        });
+        document.getElementById('btnModalGuardar').addEventListener('click', function() {
+            guardarEnGitHub().then(function(){ hasChanges=false; actualizarEstado(); document.getElementById('modalGuardar').classList.remove('active'); if(destinoPendiente)window.location.href=destinoPendiente; });
+        });
+        document.getElementById('btnModalCancelar').addEventListener('click', function() { document.getElementById('modalGuardar').classList.remove('active'); destinoPendiente=''; });
+
+        window.addEventListener('beforeunload', function(e) {
+            if(hasChanges) { e.preventDefault(); e.returnValue='Cambios sin guardar'; return e.returnValue; }
+        });
+
+        // Init
+        var configCargada = cargarConfigGitHub();
+        crearTabla();
+        if(configCargada && GITHUB_CONFIG.token) {
+            cargarDesdeGitHub();
+        }
+    })();
+    </script>
+</body>
+</html>

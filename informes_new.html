@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informes a la Directiva - J.A.C BATEAS 3</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="lib/jspdf.umd.min.js"></script>
+    <script src="lib/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="styles/design-system.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);</script>
+    <style>
+        .filters-container {
+            background: var(--bg-surface); border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl); padding: var(--space-4); margin-bottom: var(--space-4);
+        }
+        .filters-grid {
+            display: grid; grid-template-columns: 1fr 1fr auto auto; gap: var(--space-3); align-items: end;
+        }
+        .filter-group { display: flex; flex-direction: column; gap: 4px; }
+        .filter-label { font-size: 0.7rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .filter-input {
+            padding: 8px 10px; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+            background: var(--bg-primary); color: var(--text-primary); font-size: 0.8rem; font-family: inherit;
+        }
+        .filter-input:focus { outline: none; border-color: var(--brand-primary); box-shadow: 0 0 0 2px rgba(139,195,74,0.2); }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); margin-bottom: var(--space-4); }
+        .stat-card {
+            background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl);
+            padding: var(--space-4); text-align: center; position: relative; overflow: hidden;
+        }
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: var(--brand-primary);
+        }
+        .stat-icon { font-size: 1.5rem; color: var(--brand-primary); margin-bottom: 8px; }
+        .stat-value { font-size: 1.8rem; font-weight: 800; color: var(--text-primary); }
+        .stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+        .report-card {
+            background: var(--bg-surface); border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl); padding: var(--space-4); margin-bottom: var(--space-4);
+        }
+        .report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .report-title { font-size: 1rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+        .table-wrapper { overflow-x: auto; max-height: 45vh; overflow-y: auto; }
+        .report-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+        .report-table thead { position: sticky; top: 0; z-index: 2; background: #1f2937; }
+        .report-table th {
+            padding: 8px 6px; text-align: center; color: var(--text-secondary);
+            font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--brand-primary); white-space: nowrap;
+        }
+        .report-table td {
+            padding: 7px 6px; text-align: center; border-bottom: 1px solid var(--border-subtle);
+            font-size: 0.78rem; color: var(--text-primary);
+        }
+        .report-table tbody tr:hover { background: var(--bg-tertiary); }
+        .legal-ref {
+            background: var(--bg-surface); border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl); padding: var(--space-3);
+        }
+        .legal-title { font-size: 0.9rem; font-weight: 600; color: var(--brand-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .legal-text { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.6; }
+        .legal-text strong { color: var(--text-primary); }
+        .export-btns { display: flex; gap: 8px; }
+        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
+        .empty-state i { font-size: 2rem; margin-bottom: 12px; display: block; }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="../assets/images/Escudo.png" alt="Escudo" class="sidebar-logo" onerror="this.style.display='none'">
+                <div>
+                    <div class="sidebar-brand">J.A.C BATEAS 3</div>
+                    <div class="sidebar-subtitle">Informes Directiva</div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a class="nav-item" href="panel_new.html"><i class="fas fa-th-large"></i><span>Panel</span></a>
+                <a class="nav-item" href="registro_new.html"><i class="fas fa-user-plus"></i><span>Registro</span></a>
+                <a class="nav-item" href="afiliaciones_new.html"><i class="fas fa-users"></i><span>Afiliaciones</span></a>
+                <a class="nav-item" href="certificados5_new.html"><i class="fas fa-certificate"></i><span>Cert. Afiliacion</span></a>
+                <a class="nav-item" href="registro_vecinos.html"><i class="fas fa-user-friends"></i><span>Registro Vecinos</span></a>
+                <a class="nav-item" href="carta-vecina.html"><i class="fas fa-scroll"></i><span>Cert Vecino</span></a>
+                <a class="nav-item" href="certificados5_copia.html"><i class="fas fa-file-alt"></i><span>Constancia No Inscripcion</span></a>
+                <a class="nav-item" href="traslado_new.html"><i class="fas fa-exchange-alt"></i><span>Cert. Traslado</span></a>
+                <a class="nav-item" href="certificadovotacion_new.html"><i class="fas fa-vote-yea"></i><span>Cert. Votaciones</span></a>
+                <a class="nav-item" href="asistencia_new.html"><i class="fas fa-clipboard-check"></i><span>Asistencia</span></a>
+                <a class="nav-item" href="documentos_new.html"><i class="fas fa-folder-open"></i><span>Documentos</span></a>
+                <a class="nav-item" href="contador_new.html"><i class="fas fa-chart-line"></i><span>Reporte Pagos</span></a>
+                <a class="nav-item active" href="informes_new.html"><i class="fas fa-file-alt"></i><span>Informes</span></a>
+                <a class="nav-item" href="gastos.html"><i class="fas fa-money-bill-wave"></i><span>Gastos</span></a>
+                <a class="nav-item" href="tesoreria.html"><i class="fas fa-wallet"></i><span>Tesoreria</span></a>
+                <a class="nav-item" href="panel_new.html?game=snake"><i class="fas fa-gamepad"></i><span>Culebrita</span></a>
+                <a class="nav-item" href="usuarios_new.html"><i class="fas fa-users-cog"></i><span>Usuarios</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn-icon" id="themeToggle" data-tooltip="Cambiar tema"><i class="fas fa-moon"></i></button>
+                <button class="btn-icon" id="logoutBtn" data-tooltip="Cerrar sesion"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="topbar">
+                <button class="btn-icon sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+                <h1 class="topbar-title"><i class="fas fa-file-alt"></i> Informes a la Directiva</h1>
+                <div class="topbar-actions">
+                    <span class="app-name-display" id="app-name-display"></span>
+                </div>
+            </div>
+
+            <div class="page-content">
+                <!-- FILTROS DE FECHA -->
+                <div class="filters-container">
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label class="filter-label">Rango de Fechas</label>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <input type="date" id="fechaInicio" class="filter-input" style="flex:1;">
+                                <span style="color:var(--text-muted);font-size:0.8rem;">hasta</span>
+                                <input type="date" id="fechaFin" class="filter-input" style="flex:1;">
+                            </div>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">&nbsp;</label>
+                            <button class="btn btn-primary" id="btnGenerarInforme" style="width:100%;"><i class="fas fa-search"></i> Generar Informe</button>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">&nbsp;</label>
+                            <button class="btn btn-outline" id="btnLimpiar" style="width:100%;"><i class="fas fa-eraser"></i> Limpiar</button>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">&nbsp;</label>
+                            <div class="export-btns">
+                                <button class="btn btn-danger" id="btnExportPDF"><i class="fas fa-file-pdf"></i> PDF</button>
+                                <button class="btn btn-primary" id="btnImprimir"><i class="fas fa-print"></i> Imprimir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ESTADISTICAS -->
+                <div class="stats-grid" id="statsGrid" style="display:none;">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-users"></i></div>
+                        <div class="stat-value" id="statTotal">0</div>
+                        <div class="stat-label">Total Afiliados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-user-plus"></i></div>
+                        <div class="stat-value" id="statNuevos">0</div>
+                        <div class="stat-label">Nuevos en el Periodo</div>
+                    </div>
+                </div>
+
+                <!-- TABLA DE INFORME -->
+                <div class="report-card" id="reportCard" style="display:none;">
+                    <div class="report-header">
+                        <div class="report-title"><i class="fas fa-table"></i> <span id="reportTitle">Detalle de Afiliados</span></div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="report-table">
+                            <thead>
+                                <tr>
+                                    <th>N°</th>
+                                    <th>REGISTRO</th>
+                                    <th>NOMBRE</th>
+                                    <th>CEDULA</th>
+                                    <th>FECHA AFILIACION</th>
+                                    <th>DIRECCION</th>
+                                    <th>TELEFONO</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- REFERENCIA LEGAL -->
+                <div class="legal-ref">
+                    <div class="legal-title"><i class="fas fa-gavel"></i> Referencia Legal - Ley 2166 de 2021</div>
+                    <div class="legal-text">
+                        <p><strong>Art. 12.</strong> La Junta de Accion Comunal que se constituya por barrio, conjunto residencial, sector o etapa del mismo, en las capitales de departamento, requiere un numero minimo de <strong>75 afiliados</strong>.</p>
+                        <p style="margin-top:8px;"><strong>Paragrafo 1.</strong> Ningun organismo de accion comunal de primer grado podra subsistir con un numero plural de afiliados inferior al <strong>50%</strong> del requerido para su constitucion (minimo <strong>38 afiliados</strong>).</p>
+                        <p style="margin-top:8px;"><strong>Art. 20.</strong> Para afiliarse a una Junta de Accion Comunal se requiere: a) Ser persona natural; b) Residir en el territorio de la Junta; c) Tener mas de 14 anos de edad; d) No estar incurso en causal de impedimento (Art. 27); e) Poseer documento de identificacion.</p>
+                        <p style="margin-top:8px;"><strong>Art. 19.</strong> Constituye acto de afiliacion la inscripcion directa en el libro de afiliados, previa comprobacion de requisitos, hecho que se oficializara con la firma o huella del peticionario.</p>
+                    </div>
+                </div>
+
+                <!-- VACIO -->
+                <div class="empty-state" id="emptyState">
+                    <i class="fas fa-chart-bar"></i>
+                    <p>Seleccione un rango de fechas y presione <strong>Generar Informe</strong></p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="core/app-name.js"></script>
+    <script>
+        const db = firebase.firestore();
+        const STORAGE_KEY = 'jac_bateas_afiliados';
+
+        async function cargarAfiliados() {
+            try {
+                var doc = await db.collection('afiliados').doc('data').get();
+                if (doc.exists) {
+                    var datos = doc.data().afiliados || [];
+                    if (datos.length > 0) return datos;
+                }
+            } catch(e) {
+                console.error('Error Firestore:', e);
+            }
+            try {
+                var resp = await fetch('../assets/data/afiliados.json');
+                if (resp.ok) return await resp.json();
+            } catch(e) {}
+            return [];
+        }
+
+        function parseFecha(str) {
+            if (!str) return null;
+            const parts = str.split('/');
+            if (parts.length === 3) {
+                return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+            }
+            return null;
+        }
+
+        function formatFechaLarga(date) {
+            const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+            return `${date.getDate()} de ${meses[date.getMonth()]} de ${date.getFullYear()}`;
+        }
+
+        async function generarInforme() {
+            const inicioStr = document.getElementById('fechaInicio').value;
+            const finStr = document.getElementById('fechaFin').value;
+
+            if (!inicioStr || !finStr) {
+                alert('Seleccione ambas fechas del rango');
+                return;
+            }
+
+            const fechaInicio = new Date(inicioStr + 'T00:00:00');
+            const fechaFin = new Date(finStr + 'T23:59:59');
+
+            if (fechaInicio > fechaFin) {
+                alert('La fecha de inicio debe ser anterior a la fecha fin');
+                return;
+            }
+
+            const afiliados = await cargarAfiliados();
+            if (afiliados.length === 0) {
+                alert('No hay datos de afiliados disponibles');
+                return;
+            }
+
+            // Filtrar afiliados en el rango
+            const nuevosEnPeriodo = afiliados.filter(a => {
+                const f = parseFecha(a.fecha_afiliacion);
+                return f && f >= fechaInicio && f <= fechaFin;
+            });
+
+            // Actualizar estadisticas
+            document.getElementById('statTotal').textContent = afiliados.length;
+            document.getElementById('statNuevos').textContent = nuevosEnPeriodo.length;
+
+            // Llenar tabla
+            const tbody = document.getElementById('reportBody');
+            if (nuevosEnPeriodo.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted);">No se encontraron afiliados en el rango seleccionado</td></tr>';
+            } else {
+                tbody.innerHTML = nuevosEnPeriodo.map((a, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${a.registro || '-'}</td>
+                        <td style="text-align:left;font-weight:500;">${a.nombre}</td>
+                        <td>${a.cedula}</td>
+                        <td>${a.fecha_afiliacion || '-'}</td>
+                        <td style="text-align:left;">${a.direccion || '-'}</td>
+                        <td>${a.telefono || '-'}</td>
+                    </tr>
+                `).join('');
+            }
+
+            // Titulo del reporte
+            document.getElementById('reportTitle').textContent = `Afiliados del ${formatFechaLarga(fechaInicio)} al ${formatFechaLarga(fechaFin)}`;
+
+            // Mostrar elementos
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('statsGrid').style.display = 'grid';
+            document.getElementById('reportCard').style.display = 'block';
+        }
+
+        function limpiar() {
+            document.getElementById('fechaInicio').value = '';
+            document.getElementById('fechaFin').value = '';
+            document.getElementById('statsGrid').style.display = 'none';
+            document.getElementById('reportCard').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+        }
+
+        function exportPDF() {
+            if (typeof window.jspdf === 'undefined') { alert('Libreria PDF no disponible'); return; }
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'letter');
+            const pageWidth = pdf.internal.pageSize.getWidth();
+
+            // Encabezado
+            pdf.setFontSize(14);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('JUNTA DE ACCION COMUNAL - BARRIO BATEAS SECTOR 3', pageWidth / 2, 20, { align: 'center' });
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text('INFORME DE AFILIACIONES A LA DIRECTIVA', pageWidth / 2, 28, { align: 'center' });
+
+            // Fechas
+            const inicio = document.getElementById('fechaInicio').value;
+            const fin = document.getElementById('fechaFin').value;
+            if (inicio && fin) {
+                pdf.text(`Periodo: ${inicio} al ${fin}`, pageWidth / 2, 35, { align: 'center' });
+            }
+
+            // Estadisticas
+            pdf.setFontSize(9);
+            const total = document.getElementById('statTotal').textContent;
+            const nuevos = document.getElementById('statNuevos').textContent;
+            pdf.text(`Total Afiliados: ${total}  |  Nuevos en periodo: ${nuevos}`, pageWidth / 2, 42, { align: 'center' });
+
+            // Tabla
+            const rows = [];
+            document.querySelectorAll('#reportBody tr').forEach(tr => {
+                const cells = [];
+                tr.querySelectorAll('td').forEach(td => cells.push(td.textContent.trim()));
+                if (cells.length > 0) rows.push(cells);
+            });
+
+            if (rows.length > 0) {
+                pdf.autoTable({
+                    startY: 48,
+                    head: [['N°', 'REGISTRO', 'NOMBRE', 'CEDULA', 'FECHA', 'DIRECCION', 'TEL']],
+                    body: rows,
+                    styles: { fontSize: 7, cellPadding: 2 },
+                    headStyles: { fillColor: [31, 41, 55], textColor: 255, fontStyle: 'bold' },
+                    alternateRowStyles: { fillColor: [245, 245, 245] },
+                    columnStyles: {
+                        0: { cellWidth: 10 },
+                        2: { cellWidth: 50 },
+                        5: { cellWidth: 40 }
+                    }
+                });
+            }
+
+            // Referencia legal
+            const finalY = pdf.lastAutoTable ? pdf.lastAutoTable.finalY + 10 : 55;
+            if (finalY < 230) {
+                pdf.setFontSize(8);
+                pdf.setFont('helvetica', 'bold');
+                pdf.text('Referencia Legal: Ley 2166 de 2021 - Art. 12, 19, 20', 15, finalY);
+                pdf.setFont('helvetica', 'normal');
+                pdf.text('Junta de Accion Comunal Barrio Bateas Sector 3 - Puerto Gaitan, Meta', 15, finalY + 5);
+                pdf.text(`Fecha de generacion: ${new Date().toLocaleDateString('es-CO')}`, 15, finalY + 10);
+            }
+
+            pdf.save('informe_afiliaciones.pdf');
+        }
+
+        function imprimirInforme() {
+            window.print();
+        }
+
+        // Eventos
+        document.getElementById('btnGenerarInforme').addEventListener('click', generarInforme);
+        document.getElementById('btnLimpiar').addEventListener('click', limpiar);
+        document.getElementById('btnExportPDF').addEventListener('click', exportPDF);
+        document.getElementById('btnImprimir').addEventListener('click', imprimirInforme);
+
+        // Enter para generar
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && (document.activeElement.id === 'fechaInicio' || document.activeElement.id === 'fechaFin')) {
+                generarInforme();
+            }
+        });
+
+        // Auth check
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (!user) {
+                window.location.href = 'index_new.html';
+            }
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            if (confirm('Cerrar sesion?')) {
+                firebase.auth().signOut().then(function() {
+                    window.location.href = 'index_new.html';
+                });
+            }
+        });
+
+        // Theme toggle
+        function setupTheme() {
+            const saved = localStorage.getItem('theme') || 'dark';
+            document.documentElement.dataset.theme = saved;
+            updateThemeIcon(saved);
+            document.getElementById('themeToggle').addEventListener('click', function() {
+                const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+                document.documentElement.dataset.theme = next;
+                localStorage.setItem('theme', next);
+                updateThemeIcon(next);
+            });
+            function updateThemeIcon(theme) {
+                const icon = document.querySelector('#themeToggle i');
+                icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+        setupTheme();
+
+        // Sidebar toggle
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        });
+    </script>
+</body>
+</html>

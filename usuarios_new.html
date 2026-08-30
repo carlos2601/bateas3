@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion de Usuarios - J.A.C BATEAS 3</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/design-system.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: var(--bg-base);
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(236, 72, 153, 0.06) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .users-wrapper {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 600px;
+            padding: 0 var(--space-6);
+        }
+
+        .users-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-10);
+            box-shadow: var(--shadow-xl);
+            animation: loginFadeIn 0.6s var(--ease-bounce);
+        }
+
+        @keyframes loginFadeIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .users-header {
+            text-align: center;
+            margin-bottom: var(--space-8);
+        }
+
+        .users-header i {
+            font-size: 48px;
+            color: var(--brand-primary);
+            margin-bottom: var(--space-4);
+        }
+
+        .users-header h1 {
+            font-size: var(--text-xl);
+            font-weight: var(--weight-extrabold);
+            color: var(--text-primary);
+            margin-bottom: var(--space-1);
+            letter-spacing: -0.02em;
+        }
+
+        .users-header p {
+            font-size: var(--text-sm);
+            color: var(--text-muted);
+            font-weight: var(--weight-medium);
+        }
+
+        .users-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+            margin-bottom: var(--space-6);
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-3) var(--space-4);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            transition: all var(--duration-fast) var(--ease-default);
+        }
+
+        .user-item:hover {
+            border-color: var(--border-default);
+        }
+
+        .user-item-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .user-item-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-full);
+            background: var(--brand-primary-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--brand-primary);
+            font-weight: var(--weight-bold);
+            font-size: var(--text-sm);
+        }
+
+        .user-item-name {
+            font-weight: var(--weight-semibold);
+            color: var(--text-primary);
+        }
+
+        .user-item-role {
+            font-size: var(--text-xs);
+            color: var(--text-muted);
+        }
+
+        .user-item-actions {
+            display: flex;
+            gap: var(--space-2);
+        }
+
+        .user-item-actions .btn-icon {
+            width: 32px;
+            height: 32px;
+            font-size: var(--text-sm);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            margin-bottom: var(--space-4);
+        }
+
+        .form-group label {
+            font-size: var(--text-sm);
+            font-weight: var(--weight-semibold);
+            color: var(--text-secondary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-4);
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-wrapper .input {
+            padding-right: var(--space-12);
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: var(--space-3);
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: var(--space-1);
+            transition: color var(--duration-fast) var(--ease-default);
+        }
+
+        .toggle-password:hover {
+            color: var(--text-primary);
+        }
+
+        .error-box {
+            display: none;
+            padding: var(--space-3) var(--space-4);
+            background: var(--color-danger-subtle);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: var(--radius-md);
+            color: var(--color-danger);
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            text-align: center;
+            animation: shake 0.4s ease;
+        }
+
+        .error-box.visible {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+        }
+
+        .success-box {
+            display: none;
+            padding: var(--space-3) var(--space-4);
+            background: var(--color-success-subtle);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: var(--radius-md);
+            color: var(--color-success);
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            text-align: center;
+        }
+
+        .success-box.visible {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .btn-group {
+            display: flex;
+            gap: var(--space-3);
+            margin-top: var(--space-4);
+        }
+
+        .btn-group .btn {
+            flex: 1;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: var(--space-6);
+            padding-top: var(--space-4);
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .back-link a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            transition: color var(--duration-fast) var(--ease-default);
+        }
+
+        .back-link a:hover {
+            color: var(--brand-primary);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: var(--space-5);
+            right: var(--space-5);
+            z-index: 10;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--space-8);
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: var(--space-4);
+            opacity: 0.5;
+        }
+
+        #adminPanel { display: none; }
+
+        .admin-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            background: var(--brand-primary-subtle);
+            color: var(--brand-primary);
+            border-radius: var(--radius-full);
+            font-size: var(--text-xs);
+            font-weight: var(--weight-bold);
+            margin-bottom: var(--space-4);
+        }
+    </style>
+</head>
+<body>
+    <button class="btn-icon theme-toggle" id="themeToggle" data-tooltip="Cambiar tema">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <div class="users-wrapper">
+        <!-- BLOQUEO: Clave de administrador -->
+        <div class="users-card" id="authGate">
+            <div class="users-header">
+                <i class="fas fa-lock"></i>
+                <h1>Acceso Restringido</h1>
+                <p>Ingrese la clave de administrador para gestionar usuarios</p>
+            </div>
+
+            <div class="error-box" id="authError">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="authErrorText">Clave incorrecta</span>
+            </div>
+
+            <form id="authForm">
+                <div class="form-group">
+                    <label>Clave de Administrador</label>
+                    <div class="password-wrapper">
+                        <div class="input-group">
+                            <i class="fas fa-key input-icon"></i>
+                            <input type="password" class="input" id="authPassword" placeholder="Ingrese la clave" required>
+                            <button type="button" class="toggle-password" data-target="authPassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%">
+                    <i class="fas fa-unlock"></i> Ingresar
+                </button>
+            </form>
+
+            <div class="back-link">
+                <a href="index_new.html"><i class="fas fa-arrow-left"></i> Volver al login</a>
+            </div>
+        </div>
+
+        <!-- PANEL ADMIN: Gestion completa -->
+        <div class="users-card" id="adminPanel">
+            <div class="users-header">
+                <i class="fas fa-users-cog"></i>
+                <h1>Gestion de Usuarios</h1>
+                <p>Crear, editar y eliminar usuarios del sistema</p>
+            </div>
+
+            <div class="admin-badge">
+                <i class="fas fa-user-shield"></i> Administrador
+            </div>
+
+            <div class="error-box" id="errorMessage">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="errorText"></span>
+            </div>
+
+            <div class="success-box" id="successMessage">
+                <i class="fas fa-check-circle"></i>
+                <span id="successText"></span>
+            </div>
+
+            <div class="users-list" id="usersList">
+                <div class="empty-state" id="emptyState">
+                    <i class="fas fa-users"></i>
+                    <p>No hay usuarios registrados</p>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="addUserBtn" style="width:100%">
+                <i class="fas fa-plus"></i> Nuevo Usuario
+            </button>
+
+            <div class="back-link">
+                <a href="index_new.html"><i class="fas fa-arrow-left"></i> Volver al login</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Crear/Editar Usuario -->
+    <div class="modal-overlay" id="userModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modalTitle">Nuevo Usuario</h2>
+                <button class="btn-icon" id="closeModal"><i class="fas fa-times"></i></button>
+            </div>
+
+            <form id="userForm">
+                <input type="hidden" id="editUserId">
+
+                <div class="form-group">
+                    <label for="modalUsername">Usuario</label>
+                    <div class="input-group">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" class="input" id="modalUsername" placeholder="Nombre de usuario" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="modalNombre">Nombre Completo</label>
+                    <div class="input-group">
+                        <i class="fas fa-id-card input-icon"></i>
+                        <input type="text" class="input" id="modalNombre" placeholder="Nombre completo" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="modalPassword">Contrasena</label>
+                    <div class="password-wrapper">
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" class="input" id="modalPassword" placeholder="Contrasena">
+                            <button type="button" class="toggle-password" data-target="modalPassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="modalRole">Rol</label>
+                    <div class="input-group">
+                        <i class="fas fa-user-tag input-icon"></i>
+                        <select class="input" id="modalRole" required>
+                            <option value="vendedor">Vendedor</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" id="cancelModal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="saveModal">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Cambiar Contrasena -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Cambiar Contrasena</h2>
+                <button class="btn-icon" id="closePasswordModal"><i class="fas fa-times"></i></button>
+            </div>
+
+            <form id="passwordForm">
+                <input type="hidden" id="passwordUserId">
+
+                <div class="form-group">
+                    <label>Usuario</label>
+                    <div class="input-group">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" class="input" id="passwordUsername" disabled>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="currentPassword">Contrasena Actual</label>
+                    <div class="password-wrapper">
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" class="input" id="currentPassword" placeholder="Contrasena actual" required>
+                            <button type="button" class="toggle-password" data-target="currentPassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="newPassword">Nueva Contrasena</label>
+                    <div class="password-wrapper">
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" class="input" id="newPassword" placeholder="Nueva contrasena" required>
+                            <button type="button" class="toggle-password" data-target="newPassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirmar Contrasena</label>
+                    <div class="password-wrapper">
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" class="input" id="confirmPassword" placeholder="Confirmar contrasena" required>
+                            <button type="button" class="toggle-password" data-target="confirmPassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" id="cancelPasswordModal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Cambiar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Confirmar Eliminar -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Eliminar Usuario</h2>
+                <button class="btn-icon" id="closeDeleteModal"><i class="fas fa-times"></i></button>
+            </div>
+
+            <input type="hidden" id="deleteUserId">
+
+            <p style="text-align:center;color:var(--text-secondary);margin-bottom:var(--space-6);">
+                ¿Estas seguro de eliminar al usuario <strong id="deleteUserName"></strong>?<br>
+                Esta accion no se puede deshacer.
+            </p>
+
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary" id="cancelDeleteModal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="shared/components/toast.js"></script>
+    <script>
+        const ADMIN_PASSWORD = '4438681';
+        let users = [];
+
+        // Init
+        document.addEventListener('DOMContentLoaded', function() {
+            Toast.init();
+            loadUsers();
+
+            // Theme toggle
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.dataset.theme = savedTheme;
+            document.querySelector('#themeToggle i').className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        });
+
+        // Theme toggle
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            const html = document.documentElement;
+            const current = html.dataset.theme;
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.dataset.theme = next;
+            localStorage.setItem('theme', next);
+            const icon = this.querySelector('i');
+            icon.className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        });
+
+        // === AUTH GATE ===
+        document.getElementById('authForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const pass = document.getElementById('authPassword').value;
+            if (pass === ADMIN_PASSWORD) {
+                document.getElementById('authGate').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                await loadUsers();
+                console.log('Usuarios cargados:', users.length, users);
+            } else {
+                document.getElementById('authErrorText').textContent = 'Clave incorrecta';
+                document.getElementById('authError').classList.add('visible');
+            }
+        });
+
+        // Toggle password visibility
+        document.querySelectorAll('.toggle-password').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                const icon = this.querySelector('i');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.replace('fa-eye', 'fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.replace('fa-eye-slash', 'fa-eye');
+                }
+            });
+        });
+
+        // Load users
+        async function loadUsers() {
+            try {
+                if (window.electronAPI) {
+                    const resp = await window.electronAPI.readDataFile('usuarios.json');
+                    if (resp && resp.success && Array.isArray(resp.content)) {
+                        users = resp.content;
+                    } else {
+                        users = [];
+                    }
+                } else {
+                    const stored = localStorage.getItem('usuarios_bateas');
+                    users = stored ? JSON.parse(stored) : [];
+                }
+            } catch (e) {
+                console.error('Error loading users:', e);
+                users = [];
+            }
+            renderUsers();
+        }
+
+        // Save users
+        async function saveUsers() {
+            try {
+                if (window.electronAPI) {
+                    await window.electronAPI.writeDataFile('usuarios.json', users);
+                } else {
+                    localStorage.setItem('usuarios_bateas', JSON.stringify(users));
+                }
+                return true;
+            } catch (e) {
+                console.error('Error saving users:', e);
+                return false;
+            }
+        }
+
+        // Render users list
+        function renderUsers() {
+            const list = document.getElementById('usersList');
+            const emptyState = document.getElementById('emptyState');
+
+            if (users.length === 0) {
+                list.innerHTML = '';
+                list.appendChild(createEmptyState());
+                return;
+            }
+
+            list.innerHTML = '';
+            users.forEach(user => {
+                const item = document.createElement('div');
+                item.className = 'user-item';
+                item.innerHTML = `
+                    <div class="user-item-info">
+                        <div class="user-item-avatar">${user.username.charAt(0).toUpperCase()}</div>
+                        <div>
+                            <div class="user-item-name">${user.username}</div>
+                            <div class="user-item-role">${user.role === 'admin' ? 'Administrador' : 'Vendedor'} ${user.active === false ? '(Inactivo)' : ''}</div>
+                        </div>
+                    </div>
+                    <div class="user-item-actions">
+                        <button class="btn-icon" data-tooltip="Cambiar contrasena" onclick="openPasswordModal(${user.id})">
+                            <i class="fas fa-key"></i>
+                        </button>
+                        <button class="btn-icon" data-tooltip="Editar" onclick="openEditModal(${user.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-icon" data-tooltip="Eliminar" onclick="openDeleteModal(${user.id})" style="color:var(--color-danger)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function createEmptyState() {
+            const div = document.createElement('div');
+            div.className = 'empty-state';
+            div.id = 'emptyState';
+            div.innerHTML = '<i class="fas fa-users"></i><p>No hay usuarios registrados</p>';
+            return div;
+        }
+
+        // Show error
+        function showError(msg) {
+            document.getElementById('errorText').textContent = msg;
+            document.getElementById('errorMessage').classList.add('active');
+            document.getElementById('successMessage').classList.remove('active');
+        }
+
+        // Show success
+        function showSuccess(msg) {
+            document.getElementById('successText').textContent = msg;
+            document.getElementById('successMessage').classList.add('active');
+            document.getElementById('errorMessage').classList.remove('active');
+        }
+
+        // Hide messages
+        function hideMessages() {
+            document.getElementById('errorMessage').classList.remove('active');
+            document.getElementById('successMessage').classList.remove('active');
+        }
+
+        // === USER MODAL ===
+        document.getElementById('addUserBtn').addEventListener('click', function() {
+            document.getElementById('modalTitle').textContent = 'Nuevo Usuario';
+            document.getElementById('editUserId').value = '';
+            document.getElementById('modalUsername').value = '';
+            document.getElementById('modalNombre').value = '';
+            document.getElementById('modalPassword').value = '';
+            document.getElementById('modalPassword').required = true;
+            document.getElementById('modalPassword').placeholder = 'Contrasena';
+            document.getElementById('modalRole').value = 'vendedor';
+            document.getElementById('userModal').classList.add('active');
+        });
+
+        document.getElementById('closeModal').addEventListener('click', function() {
+            document.getElementById('userModal').classList.remove('active');
+        });
+
+        document.getElementById('cancelModal').addEventListener('click', function() {
+            document.getElementById('userModal').classList.remove('active');
+        });
+
+        function openEditModal(id) {
+            const user = users.find(u => u.id === id);
+            if (!user) return;
+
+            document.getElementById('modalTitle').textContent = 'Editar Usuario';
+            document.getElementById('editUserId').value = user.id;
+            document.getElementById('modalUsername').value = user.username;
+            document.getElementById('modalNombre').value = user.nombre || '';
+            document.getElementById('modalPassword').value = user.password;
+            document.getElementById('modalPassword').required = false;
+            document.getElementById('modalPassword').placeholder = 'Contrasena del usuario';
+            document.getElementById('modalRole').value = user.role;
+            document.getElementById('userModal').classList.add('active');
+        }
+
+        document.getElementById('userForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            hideMessages();
+
+            const editId = document.getElementById('editUserId').value;
+            const username = document.getElementById('modalUsername').value.trim();
+            const nombre = document.getElementById('modalNombre').value.trim();
+            const password = document.getElementById('modalPassword').value;
+            const role = document.getElementById('modalRole').value;
+
+            if (!username) {
+                showError('El usuario es obligatorio');
+                return;
+            }
+
+            if (editId) {
+                const user = users.find(u => u.id === parseInt(editId));
+                if (user) {
+                    const existing = users.find(u => u.username === username && u.id !== parseInt(editId));
+                    if (existing) {
+                        showError('Ya existe otro usuario con ese nombre');
+                        return;
+                    }
+                    user.username = username;
+                    user.nombre = nombre;
+                    user.role = role;
+                    if (password) {
+                        user.password = password;
+                    }
+                }
+            } else {
+                if (!password) {
+                    showError('La contrasena es obligatoria para nuevos usuarios');
+                    return;
+                }
+                const existing = users.find(u => u.username === username);
+                if (existing) {
+                    showError('Ya existe un usuario con ese nombre');
+                    return;
+                }
+                const newUser = {
+                    id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
+                    username,
+                    nombre,
+                    password,
+                    role,
+                    active: true,
+                    created: new Date().toISOString()
+                };
+                users.push(newUser);
+            }
+
+            const saved = await saveUsers();
+            if (saved) {
+                document.getElementById('userModal').classList.remove('active');
+                renderUsers();
+                Toast.success('Guardado', editId ? 'Usuario actualizado' : 'Usuario creado');
+            } else {
+                showError('Error al guardar. Intente de nuevo.');
+            }
+        });
+
+        // === PASSWORD MODAL ===
+        function openPasswordModal(id) {
+            const user = users.find(u => u.id === id);
+            if (!user) return;
+
+            document.getElementById('passwordUserId').value = user.id;
+            document.getElementById('passwordUsername').value = user.username;
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('passwordModal').classList.add('active');
+        }
+
+        document.getElementById('closePasswordModal').addEventListener('click', function() {
+            document.getElementById('passwordModal').classList.remove('active');
+        });
+
+        document.getElementById('cancelPasswordModal').addEventListener('click', function() {
+            document.getElementById('passwordModal').classList.remove('active');
+        });
+
+        document.getElementById('passwordForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            hideMessages();
+
+            const userId = parseInt(document.getElementById('passwordUserId').value);
+            const currentPass = document.getElementById('currentPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+
+            const user = users.find(u => u.id === userId);
+            if (!user) {
+                showError('Usuario no encontrado');
+                return;
+            }
+
+            if (user.password !== currentPass) {
+                showError('La contrasena actual es incorrecta');
+                return;
+            }
+
+            if (newPass.length < 4) {
+                showError('La nueva contrasena debe tener al menos 4 caracteres');
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+                showError('Las contrasenas no coinciden');
+                return;
+            }
+
+            user.password = newPass;
+            const saved = await saveUsers();
+            if (saved) {
+                document.getElementById('passwordModal').classList.remove('active');
+                Toast.success('Listo', 'Contrasena actualizada');
+            } else {
+                showError('Error al guardar. Intente de nuevo.');
+            }
+        });
+
+        // === DELETE MODAL ===
+        function openDeleteModal(id) {
+            const user = users.find(u => u.id === id);
+            if (!user) return;
+
+            document.getElementById('deleteUserId').value = user.id;
+            document.getElementById('deleteUserName').textContent = user.username;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        document.getElementById('closeDeleteModal').addEventListener('click', function() {
+            document.getElementById('deleteModal').classList.remove('active');
+        });
+
+        document.getElementById('cancelDeleteModal').addEventListener('click', function() {
+            document.getElementById('deleteModal').classList.remove('active');
+        });
+
+        document.getElementById('confirmDelete').addEventListener('click', async function() {
+            const userId = parseInt(document.getElementById('deleteUserId').value);
+            users = users.filter(u => u.id !== userId);
+
+            const saved = await saveUsers();
+            if (saved) {
+                document.getElementById('deleteModal').classList.remove('active');
+                renderUsers();
+                Toast.success('Eliminado', 'Usuario eliminado correctamente');
+            } else {
+                showError('Error al eliminar. Intente de nuevo.');
+            }
+        });
+    </script>
+</body>
+</html>

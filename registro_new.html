@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Afiliados - J.A.C BATEAS 3</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/design-system.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);</script>
+    <style>
+        .card-header h3 i {
+            margin-right: var(--space-2);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--space-4);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .form-label {
+            font-size: var(--text-sm);
+            font-weight: var(--weight-semibold);
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: var(--space-3) var(--space-4);
+            background: var(--bg-base);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: var(--text-sm);
+            font-family: var(--font-sans);
+            transition: all var(--duration-fast) var(--ease-default);
+            box-sizing: border-box;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 3px var(--brand-primary-subtle);
+        }
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .auto-field {
+            background: var(--brand-primary-subtle) !important;
+            color: var(--brand-primary) !important;
+            border-color: var(--brand-primary) !important;
+            font-weight: var(--weight-bold) !important;
+            cursor: default;
+        }
+
+        .error-msg {
+            font-size: var(--text-xs);
+            color: var(--color-danger);
+            display: none;
+            margin-top: var(--space-1);
+        }
+        .error-msg.visible {
+            display: block;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-3);
+            margin-top: var(--space-6);
+            flex-wrap: wrap;
+        }
+
+        .ultimo-card {
+            border-left: 4px solid var(--color-success) !important;
+        }
+        .ultimo-card .card-header h3 {
+            color: var(--color-success);
+        }
+
+        .resultado-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: var(--space-4);
+        }
+        .resultado-item {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+        }
+        .resultado-item label {
+            font-size: var(--text-xs);
+            font-weight: var(--weight-semibold);
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .resultado-item span {
+            font-size: var(--text-sm);
+            font-weight: var(--weight-semibold);
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .button-group { flex-direction: column; align-items: stretch; }
+            .resultado-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- LOADING SCREEN -->
+    <div class="app-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="../assets/images/Escudo.png" alt="Escudo" class="sidebar-logo" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Escudo_Acci%C3%B3n_Comunal_Colombia.svg/500px-Escudo_Acci%C3%B3n_Comunal_Colombia.svg.png'">
+                <div>
+                    <div class="sidebar-brand">J.A.C BATEAS 3</div>
+                    <div class="sidebar-subtitle">Sector 3 - Puerto Gaitan</div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a class="nav-item" href="panel_new.html"><i class="fas fa-th-large"></i><span>Panel</span></a>
+                <a class="nav-item active" href="registro_new.html"><i class="fas fa-user-plus"></i><span>Registro</span></a>
+                <a class="nav-item" href="afiliaciones_new.html"><i class="fas fa-users"></i><span>Afiliaciones</span></a>
+                <a class="nav-item" href="certificados5_new.html"><i class="fas fa-certificate"></i><span>Cert. Afiliacion</span></a>
+                <a class="nav-item" href="registro_vecinos.html"><i class="fas fa-user-friends"></i><span>Registro Vecinos</span></a>
+                <a class="nav-item" href="carta-vecina.html"><i class="fas fa-scroll"></i><span>Cert Vecino</span></a>
+                <a class="nav-item" href="certificados5_copia.html"><i class="fas fa-file-alt"></i><span>Constancia No Inscripcion</span></a>
+                <a class="nav-item" href="traslado_new.html"><i class="fas fa-exchange-alt"></i><span>Cert. Traslado</span></a>
+                <a class="nav-item" href="certificadovotacion_new.html"><i class="fas fa-vote-yea"></i><span>Cert. Votaciones</span></a>
+                <a class="nav-item" href="asistencia_new.html"><i class="fas fa-clipboard-check"></i><span>Asistencia</span></a>
+                <a class="nav-item" href="documentos_new.html"><i class="fas fa-folder-open"></i><span>Documentos</span></a>
+                <a class="nav-item" href="contador_new.html"><i class="fas fa-chart-line"></i><span>Reporte Pagos</span></a>
+                <a class="nav-item" href="informes_new.html"><i class="fas fa-file-alt"></i><span>Informes</span></a>
+                <a class="nav-item" href="gastos.html"><i class="fas fa-money-bill-wave"></i><span>Gastos</span></a>
+                <a class="nav-item" href="tesoreria.html"><i class="fas fa-wallet"></i><span>Tesoreria</span></a>
+                <a class="nav-item" href="panel_new.html?game=snake"><i class="fas fa-gamepad"></i><span>Culebrita</span></a>
+                <a class="nav-item" href="usuarios_new.html"><i class="fas fa-users-cog"></i><span>Usuarios</span></a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn-icon" id="themeToggle" data-tooltip="Cambiar tema">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="btn-icon" id="logoutBtn" data-tooltip="Cerrar sesion">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- TOPBAR -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="btn-icon sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title">Registro de Afiliados</h1>
+                </div>
+                <div class="topbar-right">
+                    <div class="admin-badge">
+                        <i class="fas fa-user-shield"></i>
+                        <span>Administrador</span>
+                    </div>
+                    <span class="current-date" id="currentDate"></span>
+                </div>
+            </header>
+
+            <!-- CONTENT -->
+            <div class="content-area">
+                <div class="page-content">
+
+                    <!-- ULTIMO USUARIO REGISTRADO -->
+                    <div class="card ultimo-card hidden" id="ultimoUsuarioContainer">
+                        <div class="card-header">
+                            <h3><i class="fas fa-user-check"></i> Ultimo Afiliado Registrado</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="resultado-grid">
+                                <div class="resultado-item">
+                                    <label>Nombre</label>
+                                    <span id="ultimoNombre">-</span>
+                                </div>
+                                <div class="resultado-item">
+                                    <label>Cedula</label>
+                                    <span id="ultimaCedula">-</span>
+                                </div>
+                                <div class="resultado-item">
+                                    <label>Fecha</label>
+                                    <span id="ultimaFecha">-</span>
+                                </div>
+                                <div class="resultado-item">
+                                    <label>Registro</label>
+                                    <span id="ultimoRegistro">-</span>
+                                </div>
+                                <div class="resultado-item">
+                                    <label>Folio</label>
+                                    <span id="ultimoFolio">-</span>
+                                </div>
+                                <div class="resultado-item">
+                                    <label>Renglon</label>
+                                    <span id="ultimoRenglon">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FORMULARIO DE AFILIACION -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-user-plus"></i> Formulario de Afiliacion</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="afiliacionForm" autocomplete="off">
+                                <div class="form-grid">
+                                    <!-- Nombre Completo -->
+                                    <div class="form-group">
+                                        <label class="form-label" for="nombre">Nombre Completo:</label>
+                                        <input type="text" class="form-input" id="nombre" name="nombre" required
+                                               placeholder="Ingrese nombre completo"
+                                               oninput="this.value = this.value.toUpperCase().replace(/[^A-Z\u00d1 ]/g, '')">
+                                        <div class="error-msg" id="nombreError">Minimo 5 caracteres. Solo letras mayusculas y espacios.</div>
+                                    </div>
+
+                                    <!-- Cedula -->
+                                    <div class="form-group">
+                                        <label class="form-label" for="cedula">Cedula N:</label>
+                                        <input type="text" class="form-input" id="cedula" name="cedula" required
+                                               placeholder="Ej: 1.234.567.890"
+                                               oninput="formatearCedula(this)">
+                                        <div class="error-msg" id="cedulaError">La cedula debe tener entre 5 y 11 digitos.</div>
+                                    </div>
+
+                                    <!-- Fecha de Afiliacion -->
+                                    <div class="form-group">
+                                        <label class="form-label" for="fecha">Fecha de Afiliacion:</label>
+                                        <input type="text" class="form-input" id="fecha" name="fecha" required
+                                               placeholder="DD/MM/AAAA"
+                                               oninput="validarFecha(this)">
+                                        <div class="error-msg" id="fechaError">Formato invalido. Use: DD/MM/AAAA</div>
+                                    </div>
+
+                                    <!-- Registro -->
+                                    <div class="form-group">
+                                        <label class="form-label" for="registro">Registro:</label>
+                                        <input type="text" class="form-input auto-field" id="registro" name="registro" readonly>
+                                    </div>
+
+                                    <!-- Folio -->
+                                    <div class="form-group">
+                                        <label class="form-label" for="folio">Folio:</label>
+                                        <input type="text" class="form-input auto-field" id="folio" name="folio" readonly>
+                                    </div>
+
+                                    <!-- Renglon -->
+                                    <div class="form-group">
+                                        <label class="form-label" for="renglon">Renglon:</label>
+                                        <input type="text" class="form-input auto-field" id="renglon" name="renglon" readonly>
+                                    </div>
+
+                                    <!-- Direccion -->
+                                    <div class="form-group">
+                                        <label class="form-label" for="direccion">Direccion:</label>
+                                        <input type="text" class="form-input" id="direccion" name="direccion" required
+                                               value="MANZANA  CASA"
+                                               oninput="this.value = this.value.toUpperCase().replace(/[^A-Z\u00d1 0-9]/g, '')">
+                                        <div class="error-msg" id="direccionError">Solo letras, numeros y espacios.</div>
+                                    </div>
+
+                                    <!-- Celular -->
+                                    <div class="form-group">
+                                        <label class="form-label" for="celular">Celular:</label>
+                                        <input type="text" class="form-input" id="celular" name="celular" required
+                                               maxlength="10" placeholder="10 digitos"
+                                               oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                        <div class="error-msg" id="celularError">Debe contener exactamente 10 digitos.</div>
+                                    </div>
+                                </div>
+
+                                <!-- Botones -->
+                                <div class="button-group">
+                                    <button type="button" class="btn btn-secondary" id="btnVolver">
+                                        <i class="fas fa-arrow-left"></i> Volver al Panel
+                                    </button>
+                                    <button type="button" class="btn btn-primary" id="btnGuardar">
+                                        <i class="fas fa-save"></i> Guardar
+                                    </button>
+                                    <button type="button" class="btn btn-warning" id="btnEditar">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </button>
+                                    <button type="button" class="btn btn-danger" id="btnBorrar">
+                                        <i class="fas fa-trash"></i> Borrar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- SCRIPTS -->
+    <script src="core/event-bus.js"></script>
+    <script src="core/app-state.js"></script>
+    <script src="core/auth-service.js"></script>
+    <script src="shared/components/toast.js"></script>
+    <script src="shared/utils/formatters.js"></script>
+    <script src="shared/utils/app-name.js"></script>
+    <script>
+    (function() {
+        // ========== VARIABLES GLOBALES ==========
+        let afiliados = [];
+        let ultimoId = 0;
+        let editando = false;
+        let afiliadoEditando = null;
+
+        // ========== ELEMENTOS DOM ==========
+        const el = {
+            nombre: document.getElementById('nombre'),
+            cedula: document.getElementById('cedula'),
+            fecha: document.getElementById('fecha'),
+            registro: document.getElementById('registro'),
+            folio: document.getElementById('folio'),
+            renglon: document.getElementById('renglon'),
+            direccion: document.getElementById('direccion'),
+            celular: document.getElementById('celular'),
+            btnGuardar: document.getElementById('btnGuardar'),
+            btnEditar: document.getElementById('btnEditar'),
+            btnBorrar: document.getElementById('btnBorrar'),
+            btnVolver: document.getElementById('btnVolver'),
+            form: document.getElementById('afiliacionForm'),
+            ultimoContainer: document.getElementById('ultimoUsuarioContainer'),
+            ultimoNombre: document.getElementById('ultimoNombre'),
+            ultimaCedula: document.getElementById('ultimaCedula'),
+            ultimaFecha: document.getElementById('ultimaFecha'),
+            ultimoRegistro: document.getElementById('ultimoRegistro'),
+            ultimoFolio: document.getElementById('ultimoFolio'),
+            ultimoRenglon: document.getElementById('ultimoRenglon'),
+            nombreError: document.getElementById('nombreError'),
+            cedulaError: document.getElementById('cedulaError'),
+            fechaError: document.getElementById('fechaError'),
+            celularError: document.getElementById('celularError'),
+            currentDate: document.getElementById('currentDate'),
+            themeToggle: document.getElementById('themeToggle'),
+            sidebarToggle: document.getElementById('sidebarToggle'),
+            sidebar: document.getElementById('sidebar')
+        };
+
+        // ========== FECHA Y HORA ==========
+        function updateDateTime() {
+            var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            el.currentDate.textContent = new Date().toLocaleDateString('es-ES', options);
+        }
+        updateDateTime();
+        setInterval(updateDateTime, 60000);
+
+        // ========== THEME ==========
+        (function() {
+            var saved = localStorage.getItem('theme') || 'dark';
+            document.documentElement.dataset.theme = saved;
+            updateThemeIcon(saved);
+
+            el.themeToggle.addEventListener('click', function() {
+                var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+                document.documentElement.dataset.theme = next;
+                localStorage.setItem('theme', next);
+                updateThemeIcon(next);
+            });
+
+            function updateThemeIcon(theme) {
+                var icon = el.themeToggle.querySelector('i');
+                icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        })();
+
+        // ========== SIDEBAR MOBILE ==========
+        el.sidebarToggle.addEventListener('click', function() {
+            el.sidebar.classList.toggle('collapsed');
+        });
+        document.addEventListener('click', function(e) {
+            if (window.innerWidth <= 768 && el.sidebar.classList.contains('collapsed') && !el.sidebar.contains(e.target) && !el.sidebarToggle.contains(e.target)) {
+                el.sidebar.classList.remove('collapsed');
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            if (confirm('Cerrar sesion?')) {
+                firebase.auth().signOut().then(function() { window.location.href = 'index_new.html'; });
+            }
+        });
+
+        // ========== UTILIDADES ==========
+
+        function formatearCedula(input) {
+            var soloNumeros = input.value.replace(/[^0-9]/g, '');
+            if (soloNumeros.length > 11) soloNumeros = soloNumeros.substring(0, 11);
+            var valorFormateado = '';
+            var contador = 0;
+            for (var i = soloNumeros.length - 1; i >= 0; i--) {
+                valorFormateado = soloNumeros.charAt(i) + valorFormateado;
+                contador++;
+                if (contador === 3 && i > 0) {
+                    valorFormateado = '.' + valorFormateado;
+                    contador = 0;
+                }
+            }
+            input.value = valorFormateado;
+        }
+        window.formatearCedula = formatearCedula;
+
+        function validarFecha(input) {
+            var valor = input.value.replace(/[^0-9/]/g, '');
+            if (valor.length === 2 && !valor.includes('/')) valor += '/';
+            else if (valor.length === 5 && valor.split('/').length === 2) valor += '/';
+            input.value = valor;
+        }
+        window.validarFecha = validarFecha;
+
+        function obtenerFechaActual() {
+            var d = new Date();
+            return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+        }
+
+        // ========== CALCULO CONSECUTIVO ==========
+
+        function calcularFolioRenglon(registro) {
+            var folio = 2 + (2 * Math.floor((registro - 1) / 36));
+            var renglon = ((registro - 1) % 36) + 1;
+            return { folio: folio, renglon: renglon };
+        }
+
+        function calcularCamposAutomaticos() {
+            var registro = 1;
+            var folio = 2;
+            var renglon = 1;
+
+            if (afiliados.length > 0) {
+                var registros = afiliados
+                    .map(function(a) { return { registro: parseInt(a.registro) || 0, folio: parseInt(a.folio) || 0, renglon: parseInt(a.renglon) || 0 }; })
+                    .filter(function(r) { return r.registro > 0; });
+
+                if (registros.length > 0) {
+                    registros.sort(function(a, b) { return a.registro - b.registro; });
+                    var ultimo = registros[registros.length - 1];
+                    registro = ultimo.registro + 1;
+                    renglon = ultimo.renglon + 1;
+                    folio = ultimo.folio;
+                    if (renglon > 36) {
+                        renglon = 1;
+                        folio = ultimo.folio + 2;
+                    }
+                }
+            }
+
+            el.registro.value = registro;
+            el.folio.value = folio;
+            el.renglon.value = renglon;
+        }
+
+        function actualizarUltimoUsuario() {
+            if (afiliados.length > 0) {
+                var ultimo = afiliados[afiliados.length - 1];
+                el.ultimoNombre.textContent = ultimo.nombre || 'N/A';
+                el.ultimaCedula.textContent = ultimo.cedula || 'N/A';
+                el.ultimaFecha.textContent = ultimo.fecha_afiliacion || ultimo.fecha || 'N/A';
+                el.ultimoRegistro.textContent = ultimo.registro || 'N/A';
+                el.ultimoFolio.textContent = ultimo.folio || 'N/A';
+                el.ultimoRenglon.textContent = ultimo.renglon || 'N/A';
+                el.ultimoContainer.classList.remove('hidden');
+            } else {
+                el.ultimoContainer.classList.add('hidden');
+            }
+        }
+
+        // ========== CARGA DE DATOS ==========
+
+        function normalizarRegistro(r) {
+            if (r._lastModified || r._records) return null;
+            return {
+                id: r.id || '', nombre: r.nombre || '', cedula: r.cedula ? String(r.cedula) : '',
+                fecha_afiliacion: r.fecha_afiliacion || r.fecha || '',
+                registro: r.registro ? r.registro.toString() : '', folio: r.folio ? r.folio.toString() : '',
+                renglon: r.renglon ? r.renglon.toString() : '', direccion: r.direccion || '',
+                telefono: r.telefono || r.celular || '', pagos: r.pagos || '', firma: r.firma || ''
+            };
+        }
+
+        function parsearDatos(raw) {
+            if (!raw || !Array.isArray(raw)) return { records: [], lastModified: '' };
+            var lastMod = '';
+            var records = [];
+            for (var i = 0; i < raw.length; i++) {
+                if (raw[i]._lastModified) { lastMod = raw[i]._lastModified; continue; }
+                var n = normalizarRegistro(raw[i]);
+                if (n) records.push(n);
+            }
+            return { records: records, lastModified: lastMod };
+        }
+
+        function empaquetarDatos(records, ts) {
+            var arr = records.slice();
+            arr.unshift({ _lastModified: ts || new Date().toISOString() });
+            return arr;
+        }
+
+        // ========== CARGA DE DATOS ==========
+
+        async function cargarDatosIniciales() {
+            // 1. Intentar cargar desde Firestore
+            try {
+                var db = firebase.firestore();
+                var doc = await db.collection('afiliados').doc('data').get();
+                if (doc.exists) {
+                    var data = doc.data();
+                    if (data.afiliados && Array.isArray(data.afiliados) && data.afiliados.length > 0) {
+                        afiliados = data.afiliados;
+                        ultimoId = afiliados.length > 0 ? Math.max.apply(null, afiliados.map(function(a) { return parseInt(a.id) || 0; })) : 0;
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.log('[Registro] Firestore load failed:', e);
+            }
+
+            // 2. Fallback a local
+            var dataLocal = null;
+
+            try {
+                if (typeof window.electronAPI !== 'undefined' && window.electronAPI.readDataFile) {
+                    var r = await window.electronAPI.readDataFile('afiliados.json');
+                    if (r && r.success && r.content && Array.isArray(r.content) && r.content.length > 0) dataLocal = r.content;
+                }
+            } catch(e) {}
+
+            var localParsed = parsearDatos(dataLocal);
+
+            if (localParsed.records.length > 0) {
+                afiliados = localParsed.records;
+                ultimoId = Math.max.apply(null, afiliados.map(function(a) { return parseInt(a.id) || 0; }));
+            } else {
+                afiliados = [];
+                ultimoId = 0;
+            }
+        }
+
+        // ========== GUARDAR EN LOCAL (RESPALDO) ==========
+
+        function guardarDatosLocales() {
+            var ts = new Date().toISOString();
+            var datosAGuardar = empaquetarDatos(afiliados, ts);
+            try {
+                if (typeof window.electronAPI !== 'undefined' && window.electronAPI.writeDataFile) {
+                    window.electronAPI.writeDataFile('afiliados.json', datosAGuardar).catch(function(err) {
+                        console.error('[Registro] Error guardando via electronAPI:', err);
+                    });
+                }
+            } catch (e) {
+                console.error('[Registro] Error guardando:', e);
+            }
+        }
+
+        // ========== GUARDAR EN FIRESTORE ==========
+
+        async function guardarEnFirestore() {
+            try {
+                var db = firebase.firestore();
+                await db.collection('afiliados').doc('data').set({
+                    afiliados: afiliados,
+                    ultima_actualizacion: new Date().toISOString()
+                });
+            } catch (e) {
+                console.error('[Registro] Error guardando en Firestore:', e);
+                throw e;
+            }
+        }
+
+        // ========== VALIDACION ==========
+
+        function validarFormulario() {
+            var valido = true;
+
+            var nombre = el.nombre.value;
+            if (nombre.trim().length < 5) {
+                el.nombreError.classList.add('visible');
+                valido = false;
+            } else {
+                el.nombreError.classList.remove('visible');
+            }
+
+            var cedula = el.cedula.value.replace(/[^0-9]/g, '');
+            if (cedula.length < 5 || cedula.length > 11) {
+                el.cedulaError.classList.add('visible');
+                valido = false;
+            } else {
+                el.cedulaError.classList.remove('visible');
+            }
+
+            var fecha = el.fecha.value;
+            if (!/^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) {
+                document.getElementById('fechaError').classList.add('visible');
+                valido = false;
+            } else {
+                document.getElementById('fechaError').classList.remove('visible');
+            }
+
+            var celular = el.celular.value;
+            if (celular.length !== 10) {
+                el.celularError.classList.add('visible');
+                valido = false;
+            } else {
+                el.celularError.classList.remove('visible');
+            }
+
+            return valido;
+        }
+
+        // ========== GUARDAR AFILIACION ==========
+
+        async function guardarAfiliacion() {
+            if (!validarFormulario()) return;
+
+            var cedula = el.cedula.value;
+            var nombre = el.nombre.value.toUpperCase().trim();
+            var cedulaLimpia = cedula.replace(/[^0-9]/g, '');
+
+            if (cedulaLimpia.length < 5 || cedulaLimpia.length > 11) {
+                Toast.error('Error', 'La cedula debe tener entre 5 y 11 digitos');
+                return;
+            }
+
+            if (!editando) {
+                var cedulaExiste = afiliados.some(function(a) {
+                    return a.cedula.replace(/[^0-9]/g, '') === cedulaLimpia;
+                });
+                if (cedulaExiste) {
+                    Toast.error('Duplicado', 'Ya existe un afiliado con esta cedula');
+                    return;
+                }
+                var nombreExiste = afiliados.some(function(a) {
+                    return a.nombre === nombre;
+                });
+                if (nombreExiste) {
+                    Toast.error('Duplicado', 'Ya existe un afiliado con este nombre');
+                    return;
+                }
+            }
+
+            var nuevoRegistro = parseInt(el.registro.value);
+
+            var afiliado = {
+                id: ++ultimoId,
+                registro: nuevoRegistro,
+                folio: parseInt(el.folio.value),
+                renglon: parseInt(el.renglon.value),
+                nombre: nombre,
+                cedula: cedula,
+                fecha: el.fecha.value,
+                fecha_afiliacion: el.fecha.value,
+                direccion: el.direccion.value,
+                celular: el.celular.value,
+                telefono: el.celular.value,
+                pagos: [],
+                firma: ""
+            };
+
+            if (editando) {
+                var index = afiliados.findIndex(function(a) { return a.cedula === afiliadoEditando; });
+                if (index !== -1) {
+                    afiliados[index] = afiliado;
+                }
+                editando = false;
+                afiliadoEditando = null;
+                el.btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar';
+            } else {
+                afiliados.push(afiliado);
+            }
+
+            try {
+                console.log('[Registro] Guardando en Firestore, afiliados:', afiliados.length);
+                await guardarEnFirestore();
+                guardarDatosLocales();
+                console.log('[Registro] Firestore guardado OK');
+                Toast.success('Guardado', editando ? 'Afiliado actualizado en Firestore' : 'Afiliado registrado en Firestore');
+                resetForm();
+                calcularCamposAutomaticos();
+                actualizarUltimoUsuario();
+            } catch (err) {
+                console.error('[Registro] Error guardando:', err);
+                Toast.error('Error de sincronizacion', err.message || 'No se pudo guardar en Firestore. Verifica tu conexion.');
+            }
+        }
+
+        function resetForm() {
+            el.form.reset();
+            el.direccion.value = 'MANZANA  CASA';
+            el.fecha.value = obtenerFechaActual();
+            el.nombreError.classList.remove('visible');
+            el.cedulaError.classList.remove('visible');
+            document.getElementById('fechaError').classList.remove('visible');
+            el.celularError.classList.remove('visible');
+        }
+
+        // ========== EDITAR ==========
+
+        function habilitarEdicion() {
+            var cedula = prompt("Ingrese la cedula del afiliado a editar:");
+            if (!cedula) return;
+
+            var afiliado = afiliados.find(function(a) { return a.cedula === cedula; });
+            if (!afiliado) {
+                Toast.error('No encontrado', 'No se encontro afiliado con esa cedula');
+                return;
+            }
+
+            el.nombre.value = afiliado.nombre;
+            el.cedula.value = afiliado.cedula;
+            el.fecha.value = afiliado.fecha;
+            el.direccion.value = afiliado.direccion;
+            el.celular.value = afiliado.celular;
+            el.registro.value = afiliado.registro;
+            el.folio.value = afiliado.folio;
+            el.renglon.value = afiliado.renglon;
+
+            editando = true;
+            afiliadoEditando = cedula;
+            el.btnGuardar.innerHTML = '<i class="fas fa-save"></i> Actualizar';
+            Toast.info('Modo edicion', 'Modifique los campos y presione Actualizar');
+        }
+
+        // ========== BORRAR ==========
+
+        async function borrarAfiliacion() {
+            var cedula = prompt("Ingrese la cedula del afiliado a eliminar:");
+            if (!cedula) return;
+
+            var afiliado = afiliados.find(function(a) { return a.cedula === cedula; });
+            if (!afiliado) {
+                Toast.error('No encontrado', 'No se encontro afiliado con esa cedula');
+                return;
+            }
+
+            if (confirm('Eliminar a ' + afiliado.nombre + '?')) {
+                afiliados = afiliados.filter(function(a) { return a.cedula !== cedula; });
+                try {
+                    await guardarEnFirestore();
+                    guardarDatosLocales();
+                    calcularCamposAutomaticos();
+                    actualizarUltimoUsuario();
+                    Toast.success('Eliminado', afiliado.nombre + ' eliminado de Firestore');
+                } catch (err) {
+                    Toast.error('Error de sincronizacion', err.message || 'No se pudo eliminar en Firestore.');
+                }
+            }
+        }
+
+        // ========== EVENTOS ==========
+
+        el.btnGuardar.addEventListener('click', guardarAfiliacion);
+        el.btnEditar.addEventListener('click', habilitarEdicion);
+        el.btnBorrar.addEventListener('click', borrarAfiliacion);
+        el.btnVolver.addEventListener('click', function() {
+            window.location.href = 'panel_new.html';
+        });
+
+        // ========== INICIALIZACION ==========
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Verificar sesion
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (!user) {
+                    window.location.href = 'index_new.html';
+                    return;
+                }
+            });
+
+            try { Toast.init(); } catch(e) { console.error('Toast init error:', e); }
+
+            el.fecha.value = obtenerFechaActual();
+
+            await cargarDatosIniciales();
+            calcularCamposAutomaticos();
+            actualizarUltimoUsuario();
+        });
+
+    })();
+    </script>
+</body>
+</html>

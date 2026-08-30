@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - J.A.C BATEAS 3</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/design-system.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);</script>
+    <style>
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--space-5);
+            margin-top: var(--space-6);
+        }
+        .module-item {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            cursor: pointer;
+            transition: all var(--duration-base) var(--ease-bounce);
+            position: relative;
+            overflow: hidden;
+        }
+        .module-item::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity var(--duration-base) var(--ease-default);
+            pointer-events: none;
+        }
+        .module-item:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-default);
+            box-shadow: var(--shadow-xl);
+        }
+        .module-item:hover::before {
+            opacity: 1;
+        }
+        .module-item-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            margin-bottom: var(--space-4);
+        }
+        .module-item-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--text-xl);
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .module-item-icon.green { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .module-item-icon.red { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .module-item-icon.yellow { background: linear-gradient(135deg, #eab308, #ca8a04); }
+        .module-item-icon.brown { background: linear-gradient(135deg, #a16207, #92400e); }
+        .module-item-icon.purple { background: linear-gradient(135deg, #a855f7, #9333ea); }
+        .module-item-icon.blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .module-item-icon.cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .module-item-title {
+            font-size: var(--text-lg);
+            font-weight: var(--weight-bold);
+            color: var(--text-primary);
+            margin-bottom: var(--space-1);
+        }
+        .module-item-desc {
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+            line-height: var(--leading-relaxed);
+        }
+        .module-item-arrow {
+            position: absolute;
+            right: var(--space-5);
+            top: 50%;
+            transform: translateY(-50%) translateX(-5px);
+            color: var(--text-muted);
+            font-size: var(--text-sm);
+            opacity: 0;
+            transition: all var(--duration-base) var(--ease-default);
+        }
+        .module-item:hover .module-item-arrow {
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
+        }
+        .module-item-badges {
+            display: flex;
+            gap: var(--space-2);
+            flex-wrap: wrap;
+        }
+
+        /* Quick stats row */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        .quick-stat {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4) var(--space-5);
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            transition: all var(--duration-base) var(--ease-default);
+        }
+        .quick-stat:hover {
+            border-color: var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .quick-stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--text-lg);
+            color: white;
+            flex-shrink: 0;
+        }
+        .quick-stat-value {
+            font-size: var(--text-2xl);
+            font-weight: var(--weight-extrabold);
+            color: var(--text-primary);
+            line-height: 1;
+        }
+        .quick-stat-label {
+            font-size: var(--text-xs);
+            color: var(--text-muted);
+            margin-top: var(--space-1);
+        }
+        @media (max-width: 1024px) {
+            .quick-stats { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 640px) {
+            .quick-stats { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="../assets/images/Escudo.png" alt="Escudo" class="sidebar-logo" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Escudo_Acci%C3%B3n_Comunal_Colombia.svg/500px-Escudo_Acci%C3%B3n_Comunal_Colombia.svg.png'">
+                <div>
+                    <div class="sidebar-brand">J.A.C BATEAS 3</div>
+                    <div class="sidebar-subtitle">Sector 3 - Puerto Gaitan</div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a class="nav-item active" href="panel_new.html"><i class="fas fa-th-large"></i><span>Panel</span></a>
+                <a class="nav-item" href="registro_new.html"><i class="fas fa-user-plus"></i><span>Registro</span></a>
+                <a class="nav-item" href="afiliaciones_new.html"><i class="fas fa-users"></i><span>Afiliaciones</span></a>
+                <a class="nav-item" href="certificados5_new.html"><i class="fas fa-certificate"></i><span>Cert. Afiliacion</span></a>
+                <a class="nav-item" href="registro_vecinos.html"><i class="fas fa-user-friends"></i><span>Registro Vecinos</span></a>
+                <a class="nav-item" href="carta-vecina.html"><i class="fas fa-scroll"></i><span>Cert Vecino</span></a>
+                <a class="nav-item" href="certificados5_copia.html"><i class="fas fa-file-alt"></i><span>Constancia No Inscripcion</span></a>
+                <a class="nav-item" href="traslado_new.html"><i class="fas fa-exchange-alt"></i><span>Cert. Traslado</span></a>
+                <a class="nav-item" href="certificadovotacion_new.html"><i class="fas fa-vote-yea"></i><span>Cert. Votaciones</span></a>
+                <a class="nav-item" href="asistencia_new.html"><i class="fas fa-clipboard-check"></i><span>Asistencia</span></a>
+                <a class="nav-item" href="documentos_new.html"><i class="fas fa-folder-open"></i><span>Documentos</span></a>
+                <a class="nav-item" href="contador_new.html"><i class="fas fa-chart-line"></i><span>Reporte Pagos</span></a>
+                <a class="nav-item" href="informes_new.html"><i class="fas fa-file-alt"></i><span>Informes</span></a>
+                <a class="nav-item" href="gastos.html"><i class="fas fa-money-bill-wave"></i><span>Gastos</span></a>
+                <a class="nav-item" href="tesoreria.html"><i class="fas fa-wallet"></i><span>Tesoreria</span></a>
+                <a class="nav-item" href="#" id="snakeSidebarBtn"><i class="fas fa-gamepad"></i><span>Culebrita</span></a>
+                <a class="nav-item" href="usuarios_new.html"><i class="fas fa-users-cog"></i><span>Usuarios</span></a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn-icon" id="themeToggle" data-tooltip="Cambiar tema">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="btn-icon" id="logoutBtn" data-tooltip="Cerrar sesion">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- TOPBAR -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="btn-icon sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Panel de Control</h1>
+                </div>
+                <div class="topbar-right">
+                    <button class="btn-icon" id="changePasswordBtn" data-tooltip="Cambiar contrasena" style="color:var(--brand-primary)">
+                        <i class="fas fa-key"></i>
+                    </button>
+                    <div class="admin-badge">
+                        <i class="fas fa-user-shield"></i>
+                        <span id="currentUserDisplay">Administrador</span>
+                    </div>
+                    <span class="current-date" id="currentDate"></span>
+                </div>
+            </header>
+
+            <!-- CONTENT -->
+            <div class="content-area">
+                <div class="page-content">
+                    <!-- Welcome -->
+                    <div class="welcome-card" style="text-align:center;position:relative;overflow:hidden;background:url('../assets/images/img_ajedrez.png') center/cover no-repeat;border:1px solid var(--brand-primary);">
+                        <div style="position:absolute;inset:0;background:var(--bg-surface);opacity:0.85;"></div>
+                        <div style="position:relative;z-index:1;">
+                            <h2>Bienvenido al Panel de Control</h2>
+                            <p style="text-align:center;max-width:100%;margin:0 auto;">Gestiona todas las actividades de tu junta de accion comunal desde este panel centralizado. Selecciona un modulo para comenzar.</p>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="quick-stats">
+                        <div class="quick-stat">
+                            <div class="quick-stat-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6)">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div>
+                                <div class="quick-stat-value" id="statAfiliados">--</div>
+                                <div class="quick-stat-label">Total Afiliados</div>
+                            </div>
+                        </div>
+                        <div class="quick-stat">
+                            <div class="quick-stat-icon" style="background: linear-gradient(135deg, #10b981, #059669)">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div>
+                                <div class="quick-stat-value" id="statActivos">--</div>
+                                <div class="quick-stat-label">Activos</div>
+                            </div>
+                        </div>
+                        <div class="quick-stat">
+                            <div class="quick-stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706)">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div>
+                                <div class="quick-stat-value" id="syncStatus">--</div>
+                                <div class="quick-stat-label">Firestore</div>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                    <!-- Modules Grid -->
+                    <div class="module-grid">
+                        <!-- Registro -->
+                        <a class="module-item" href="registro_new.html">
+                            <div class="module-item-header">
+                                <div class="module-item-icon green">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                                <div>
+                                    <div class="module-item-title">Registro</div>
+                                    <div class="module-item-desc">Registro de nuevos miembros y gestion de datos personales.</div>
+                                </div>
+                            </div>
+                            <div class="module-item-badges">
+                                <span class="badge badge-success">Activo</span>
+                            </div>
+                            <i class="fas fa-chevron-right module-item-arrow"></i>
+                        </a>
+
+                        <!-- Afiliaciones -->
+                        <a class="module-item" href="afiliaciones_new.html">
+                            <div class="module-item-header">
+                                <div class="module-item-icon red">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div>
+                                    <div class="module-item-title">Afiliaciones</div>
+                                    <div class="module-item-desc">Gestiona las solicitudes de afiliacion y datos de miembros.</div>
+                                </div>
+                            </div>
+                            <div class="module-item-badges">
+                                <span class="badge badge-info">Firestore</span>
+                            </div>
+                            <i class="fas fa-chevron-right module-item-arrow"></i>
+                        </a>
+
+                        <!-- Certificados -->
+                        <a class="module-item" href="certificados5_new.html">
+                            <div class="module-item-header">
+                                <div class="module-item-icon yellow">
+                                    <i class="fas fa-certificate"></i>
+                                </div>
+                                <div>
+                                    <div class="module-item-title">Certificados</div>
+                                    <div class="module-item-desc">Genera constancias de afiliacion con verificacion de pagos.</div>
+                                </div>
+                            </div>
+                            <div class="module-item-badges">
+                                <span class="badge badge-warning">PDF / PNG</span>
+                            </div>
+                            <i class="fas fa-chevron-right module-item-arrow"></i>
+                        </a>
+
+                        <!-- Certificado de Constancia No Inscripcion -->
+                        <a class="module-item" href="certificados5_copia.html">
+                            <div class="module-item-header">
+                                <div class="module-item-icon red">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div>
+                                    <div class="module-item-title">Constancia No Inscripcion</div>
+                                    <div class="module-item-desc">Genera constancia de no inscripcion editable.</div>
+                                </div>
+                            </div>
+                            <div class="module-item-badges">
+                                <span class="badge badge-warning">PDF / PNG</span>
+                            </div>
+                            <i class="fas fa-chevron-right module-item-arrow"></i>
+                        </a>
+
+                        <!-- Certificado de Traslado -->
+                        <a class="module-item" href="traslado_new.html">
+                            <div class="module-item-header">
+                                <div class="module-item-icon brown">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </div>
+                                <div>
+                                    <div class="module-item-title">Cert. Traslado</div>
+                                    <div class="module-item-desc">Constancia de desafiliacion para miembros que se trasladan.</div>
+                                </div>
+                            </div>
+                            <div class="module-item-badges">
+                                <span class="badge badge-info">PDF / PNG</span>
+                            </div>
+                            <i class="fas fa-chevron-right module-item-arrow"></i>
+                        </a>
+
+                        <!-- Certificado de Votaciones -->
+                        <a class="module-item" href="certificadovotacion_new.html">
+                            <div class="module-item-header">
+                                <div class="module-item-icon purple">
+                                    <i class="fas fa-vote-yea"></i>
+                                </div>
+                                <div>
+                                    <div class="module-item-title">Cert. Votaciones</div>
+                                    <div class="module-item-desc">Constancia de asistencia a asambleas de elecciones.</div>
+                                </div>
+                            </div>
+                            <div class="module-item-badges">
+                                <span class="badge badge-primary">Asamblea</span>
+                            </div>
+                            <i class="fas fa-chevron-right module-item-arrow"></i>
+                        </a>
+
+                        <!-- Asistencia -->
+                        <a class="module-item" href="asistencia_new.html">
+                            <div class="module-item-header">
+                                <div class="module-item-icon cyan">
+                                    <i class="fas fa-clipboard-check"></i>
+                                </div>
+                                <div>
+                                    <div class="module-item-title">Asistencia</div>
+                                    <div class="module-item-desc">Control de asistencia y constancias para asambleas generales.</div>
+                                </div>
+                            </div>
+                            <div class="module-item-badges">
+                                <span class="badge badge-info">Asamblea</span>
+                            </div>
+                            <i class="fas fa-chevron-right module-item-arrow"></i>
+                        </a>
+
+
+
+
+
+                        <!-- Documentos -->
+                        <a class="module-item" href="documentos_new.html">
+                            <div class="module-item-header">
+                                <div class="module-item-icon purple">
+                                    <i class="fas fa-folder-open"></i>
+                                </div>
+                                <div>
+                                    <div class="module-item-title">Documentos</div>
+                                    <div class="module-item-desc">Archivo digital de actas, reglamentos y documentos oficiales.</div>
+                                </div>
+                            </div>
+                            <div class="module-item-badges">
+                                <span class="badge badge-primary">Oficial</span>
+                            </div>
+                            <i class="fas fa-chevron-right module-item-arrow"></i>
+                        </a>
+
+                        <!-- Reporte Pagos -->
+                        <a class="module-item" href="contador_new.html">
+                            <div class="module-item-header">
+                                <div class="module-item-icon green">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div>
+                                    <div class="module-item-title">Reporte de Pagos</div>
+                                    <div class="module-item-desc">Consulta y descarga el reporte de pagos de afiliados por rango de fechas.</div>
+                                </div>
+                            </div>
+                            <div class="module-item-badges">
+                                <span class="badge badge-success">Finanzas</span>
+                            </div>
+                            <i class="fas fa-chevron-right module-item-arrow"></i>
+                        </a>
+
+                        <!-- Informes -->
+                        <a class="module-item" href="informes_new.html">
+                            <div class="module-item-header">
+                                <div class="module-item-icon cyan">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div>
+                                    <div class="module-item-title">Informes a la Directiva</div>
+                                    <div class="module-item-desc">Genera informes de afiliaciones por rango de fechas para la directiva.</div>
+                                </div>
+                            </div>
+                            <div class="module-item-badges">
+                                <span class="badge badge-info">Reportes</span>
+                            </div>
+                            <i class="fas fa-chevron-right module-item-arrow"></i>
+                        </a>
+
+                        <a class="module-item" href="gastos.html">
+                            <div class="module-item-header">
+                                <div class="module-item-icon red">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div>
+                                    <div class="module-item-title">Gastos</div>
+                                    <div class="module-item-desc">Registro y control de gastos de la junta.</div>
+                                </div>
+                            </div>
+                            <div class="module-item-badges">
+                                <span class="badge badge-danger">Finanzas</span>
+                            </div>
+                            <i class="fas fa-chevron-right module-item-arrow"></i>
+                        </a>
+
+                        <a class="module-item" href="tesoreria.html">
+                            <div class="module-item-header">
+                                <div class="module-item-icon green">
+                                    <i class="fas fa-wallet"></i>
+                                </div>
+                                <div>
+                                    <div class="module-item-title">Tesoreria</div>
+                                    <div class="module-item-desc">Control de pagos, cuotas y tesoreria de la junta.</div>
+                                </div>
+                            </div>
+                            <div class="module-item-badges">
+                                <span class="badge badge-success">Finanzas</span>
+                            </div>
+                            <i class="fas fa-chevron-right module-item-arrow"></i>
+                        </a>
+
+                        <!-- Culebrita -->
+                        <div class="module-item" id="snakeModuleBtn" style="cursor:pointer;">
+                            <div class="module-item-header">
+                                <div class="module-item-icon" style="background:linear-gradient(135deg,#4CAF50,#2E7D32);">
+                                    <i class="fas fa-gamepad" style="color:white;font-size:20px;"></i>
+                                </div>
+                                <div>
+                                    <div class="module-item-title">Juego de la Culebrita</div>
+                                    <div class="module-item-desc">Diviertete con el clasico juego de la serpiente.</div>
+                                </div>
+                            </div>
+                            <div class="module-item-badges">
+                                <span class="badge badge-success">Juego</span>
+                            </div>
+                            <i class="fas fa-chevron-right module-item-arrow"></i>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Snake Game Modal -->
+    <div class="modal-overlay" id="snakeModal" style="z-index:9999;">
+        <div class="modal" style="max-width:660px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-gamepad" style="margin-right:8px;color:#4CAF50;"></i>Culebrita</h3>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <span style="font-size:0.85rem;color:var(--text-secondary);">Puntaje: <strong id="snakeScore" style="color:#4CAF50;">0</strong></span>
+                    <button class="btn btn-sm btn-primary" id="btnRestartSnake"><i class="fas fa-redo"></i></button>
+                    <button class="modal-close" id="btnCloseSnake"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="modal-body" style="text-align:center;padding:12px;">
+                <canvas id="snakeCanvas" style="border:2px solid var(--border-subtle);border-radius:var(--radius-md);background:#0a0e1a;display:block;margin:0 auto;max-width:100%;"></canvas>
+                <div id="snakeLevelSelect" style="margin-top:12px;">
+                    <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px;">Selecciona un nivel y presiona una tecla para iniciar:</p>
+                    <div style="display:flex;justify-content:center;gap:12px;">
+                        <button class="btn btn-outline" id="snakeLvl1" style="border-color:#4CAF50;color:#4CAF50;min-width:100px;"><i class="fas fa-bolt"></i> Facil</button>
+                        <button class="btn btn-outline" id="snakeLvl2" style="border-color:#FFD700;color:#FFD700;min-width:100px;"><i class="fas fa-fire"></i> Normal</button>
+                        <button class="btn btn-outline" id="snakeLvl3" style="border-color:#f44336;color:#f44336;min-width:100px;"><i class="fas fa-skull"></i> Dificil</button>
+                    </div>
+                    <p style="margin-top:8px;font-size:0.7rem;color:var(--text-muted);">Flechas o WASD para mover | Espacio para pausar</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cambiar Contrasena -->
+    <div class="modal-overlay" id="changePasswordModal">
+        <div class="modal-content" style="max-width:420px;">
+            <div class="modal-header">
+                <h2>Cambiar Mi Contrasena</h2>
+                <button class="btn-icon" id="closeChangePasswordModal"><i class="fas fa-times"></i></button>
+            </div>
+
+            <form id="changePasswordForm">
+                <div class="form-group">
+                    <label>Usuario</label>
+                    <div class="input-group" style="position:relative;">
+                        <i class="fas fa-user" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);z-index:1;"></i>
+                        <input type="text" class="input" id="cpUsername" disabled style="padding-left:36px;width:100%;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cpCurrentPassword">Contrasena Actual</label>
+                    <div class="input-group" style="position:relative;">
+                        <i class="fas fa-lock" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);z-index:1;"></i>
+                        <input type="password" class="input" id="cpCurrentPassword" placeholder="Contrasena actual" required style="padding-left:36px;padding-right:36px;width:100%;">
+                        <button type="button" class="toggle-password" data-target="cpCurrentPassword" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px;">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cpNewPassword">Nueva Contrasena</label>
+                    <div class="input-group" style="position:relative;">
+                        <i class="fas fa-lock" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);z-index:1;"></i>
+                        <input type="password" class="input" id="cpNewPassword" placeholder="Nueva contrasena" required style="padding-left:36px;padding-right:36px;width:100%;">
+                        <button type="button" class="toggle-password" data-target="cpNewPassword" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px;">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cpConfirmPassword">Confirmar Contrasena</label>
+                    <div class="input-group" style="position:relative;">
+                        <i class="fas fa-lock" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);z-index:1;"></i>
+                        <input type="password" class="input" id="cpConfirmPassword" placeholder="Confirmar contrasena" required style="padding-left:36px;padding-right:36px;width:100%;">
+                        <button type="button" class="toggle-password" data-target="cpConfirmPassword" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px;">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:var(--space-3);margin-top:var(--space-4);">
+                    <button type="button" class="btn btn-secondary" id="cancelChangePassword" style="flex:1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Cambiar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Confirmar Cerrar Sesion -->
+    <div class="modal-overlay" id="logoutModal">
+        <div class="modal" style="max-width:380px;text-align:center;">
+            <div style="padding:var(--space-8) var(--space-6);">
+                <div style="width:64px;height:64px;border-radius:50%;background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-5);">
+                    <i class="fas fa-sign-out-alt" style="font-size:28px;color:#ef4444;"></i>
+                </div>
+                <h3 style="font-size:var(--text-lg);font-weight:var(--weight-bold);color:var(--text-primary);margin-bottom:var(--space-2);">Cerrar Sesion</h3>
+                <p style="font-size:var(--text-sm);color:var(--text-muted);margin-bottom:var(--space-6);">Estas seguro que deseas cerrar la sesion?</p>
+                <div style="display:flex;gap:var(--space-3);">
+                    <button class="btn btn-secondary" id="cancelLogout" style="flex:1;">Cancelar</button>
+                    <button class="btn btn-danger" id="confirmLogout" style="flex:1;">Cerrar Sesion</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts core -->
+    <script src="core/event-bus.js"></script>
+    <script src="core/app-state.js"></script>
+    <script src="core/auth-service.js"></script>
+    <script src="shared/components/toast.js"></script>
+    <script src="shared/utils/formatters.js"></script>
+
+    <script>
+        const APP_VERSION_KEY = 'app_version_bateas';
+        const CURRENT_VERSION = '2.0.0';
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            try { Toast.init(); } catch(e) {}
+
+            localStorage.setItem(APP_VERSION_KEY, CURRENT_VERSION);
+
+            // Verificar sesion con Firebase Auth
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (!user) {
+                    window.location.href = 'index_new.html';
+                    return;
+                }
+                var displayEl = document.getElementById('currentUserDisplay');
+                if (displayEl) displayEl.textContent = user.email;
+            });
+
+            try { updateDateTime(); setInterval(updateDateTime, 60000); } catch(e) {}
+            try { loadStats(); } catch(e) {}
+            try { setupTheme(); } catch(e) {}
+            try { setupSidebar(); } catch(e) {}
+
+            function safeClick(id, fn) {
+                try {
+                    var el = document.getElementById(id);
+                    if (el) el.addEventListener('click', fn);
+                } catch(e) { console.error('Error registering click for ' + id, e); }
+            }
+
+            safeClick('logoutBtn', function() {
+                document.getElementById('logoutModal').classList.add('active');
+            });
+
+            safeClick('cancelLogout', function() {
+                document.getElementById('logoutModal').classList.remove('active');
+            });
+
+            safeClick('confirmLogout', function() {
+                document.getElementById('logoutModal').classList.remove('active');
+                firebase.auth().signOut().then(function() {
+                    window.location.href = 'index_new.html';
+                });
+            });
+
+            var currentUser = firebase.auth().currentUser;
+            if (currentUser) {
+                var displayEl = document.getElementById('currentUserDisplay');
+                if (displayEl) displayEl.textContent = currentUser.email;
+            }
+
+            safeClick('changePasswordBtn', function() {
+                var user = AuthService.getCurrentUser();
+                if (!user) return;
+                document.getElementById('cpUsername').value = user.usuario;
+                document.getElementById('cpCurrentPassword').value = '';
+                document.getElementById('cpNewPassword').value = '';
+                document.getElementById('cpConfirmPassword').value = '';
+                document.getElementById('changePasswordModal').classList.add('active');
+            });
+
+            safeClick('closeChangePasswordModal', function() {
+                document.getElementById('changePasswordModal').classList.remove('active');
+            });
+
+            safeClick('cancelChangePassword', function() {
+                document.getElementById('changePasswordModal').classList.remove('active');
+            });
+
+            var cpForm = document.getElementById('changePasswordForm');
+            if (cpForm) cpForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                var user = AuthService.getCurrentUser();
+                if (!user) return;
+
+                var currentPass = document.getElementById('cpCurrentPassword').value;
+                var newPass = document.getElementById('cpNewPassword').value;
+                var confirmPass = document.getElementById('cpConfirmPassword').value;
+
+                if (newPass.length < 4) {
+                    Toast.error('Error', 'La nueva contrasena debe tener al menos 4 caracteres');
+                    return;
+                }
+                if (newPass !== confirmPass) {
+                    Toast.error('Error', 'Las contrasenas no coinciden');
+                    return;
+                }
+
+                try {
+                    var user = firebase.auth().currentUser;
+                    if (!user) {
+                        Toast.error('Error', 'No hay sesion activa');
+                        return;
+                    }
+                    var credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPass);
+                    await user.reauthenticateWithCredential(credential);
+                    await user.updatePassword(newPass);
+                    document.getElementById('changePasswordModal').classList.remove('active');
+                    Toast.success('Listo', 'Contrasena actualizada');
+                } catch(err) {
+                    var msg = 'Error al actualizar contrasena';
+                    if (err.code === 'auth/wrong-password') msg = 'La contrasena actual es incorrecta';
+                    Toast.error('Error', msg);
+                }
+            });
+
+            document.querySelectorAll('.toggle-password').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var targetId = this.getAttribute('data-target');
+                    var input = document.getElementById(targetId);
+                    var icon = this.querySelector('i');
+                    if (!input || !icon) return;
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.replace('fa-eye', 'fa-eye-slash');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.replace('fa-eye-slash', 'fa-eye');
+                    }
+                });
+            });
+        });
+
+        function updateDateTime() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent =
+                new Date().toLocaleDateString('es-ES', options);
+        }
+
+        async function loadStats() {
+            try {
+                const db = firebase.firestore();
+                const doc = await db.collection('afiliados').doc('data').get();
+                let afiliados = [];
+                if (doc.exists) {
+                    const data = doc.data();
+                    afiliados = Array.isArray(data.afiliados) ? data.afiliados : (Array.isArray(data) ? data : []);
+                }
+                document.getElementById('statAfiliados').textContent = afiliados.length;
+                document.getElementById('statActivos').textContent =
+                    afiliados.filter(a => a.estado !== 'inactivo').length;
+                document.getElementById('syncStatus').textContent = afiliados.length + ' Firestore';
+                document.getElementById('syncStatus').style.color = 'var(--color-success)';
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                document.getElementById('statAfiliados').textContent = '0';
+                document.getElementById('statActivos').textContent = '0';
+                document.getElementById('syncStatus').textContent = 'Error';
+                document.getElementById('syncStatus').style.color = 'var(--color-danger)';
+            }
+        }
+
+        function setupTheme() {
+            const toggle = document.getElementById('themeToggle');
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.dataset.theme = savedTheme;
+            updateThemeIcon(savedTheme);
+            toggle.addEventListener('click', function() {
+                const current = document.documentElement.dataset.theme;
+                const next = current === 'dark' ? 'light' : 'dark';
+                document.documentElement.dataset.theme = next;
+                localStorage.setItem('theme', next);
+                updateThemeIcon(next);
+            });
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.querySelector('#themeToggle i');
+            icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        function setupSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            toggle.addEventListener('click', function() { sidebar.classList.toggle('collapsed'); });
+            document.addEventListener('click', function(e) {
+                if (window.innerWidth <= 768 && sidebar.classList.contains('collapsed') && !sidebar.contains(e.target) && !toggle.contains(e.target)) {
+                    sidebar.classList.remove('collapsed');
+                }
+            });
+        }
+
+        // ===== SNAKE GAME =====
+        (function() {
+            const canvas = document.getElementById('snakeCanvas');
+            const ctx = canvas.getContext('2d');
+            const scoreEl = document.getElementById('snakeScore');
+            const modal = document.getElementById('snakeModal');
+            const btnOpen = document.getElementById('snakeModuleBtn');
+            const btnClose = document.getElementById('btnCloseSnake');
+            const btnRestart = document.getElementById('btnRestartSnake');
+            const levelSelect = document.getElementById('snakeLevelSelect');
+
+            const GRID = 20;
+            let COLS, ROWS;
+            let snake, food, dir, nextDir, score, gameOver, paused, loop, started, speed;
+
+            const speeds = { 1: 150, 2: 100, 3: 60 };
+
+            function resizeCanvas() {
+                var w = Math.floor(window.innerWidth * 0.7);
+                var h = Math.floor(window.innerHeight * 0.8);
+                w = Math.min(w, 900);
+                h = Math.min(h, 800);
+                var cols = Math.floor(w / GRID);
+                var rows = Math.floor(h / GRID);
+                canvas.width = cols * GRID;
+                canvas.height = rows * GRID;
+                COLS = cols;
+                ROWS = rows;
+            }
+
+            function init() {
+                resizeCanvas();
+                snake = [{x:Math.floor(COLS/2), y:Math.floor(ROWS/2)},{x:Math.floor(COLS/2)-1, y:Math.floor(ROWS/2)},{x:Math.floor(COLS/2)-2, y:Math.floor(ROWS/2)}];
+                dir = {x:1, y:0};
+                nextDir = {x:1, y:0};
+                score = 0;
+                gameOver = false;
+                paused = false;
+                started = false;
+                speed = speeds[2];
+                scoreEl.textContent = '0';
+                if (loop) { clearInterval(loop); loop = null; }
+                levelSelect.style.display = 'block';
+                placeFood();
+                drawStartScreen();
+            }
+
+            function startGame(level) {
+                speed = speeds[level] || speeds[2];
+                started = true;
+                levelSelect.style.display = 'none';
+                if (!loop) loop = setInterval(gameLoop, speed);
+            }
+
+            function placeFood() {
+                do {
+                    food = { x: Math.floor(Math.random()*COLS), y: Math.floor(Math.random()*ROWS) };
+                } while (snake.some(s => s.x === food.x && s.y === food.y));
+            }
+
+            function drawStartScreen() {
+                ctx.fillStyle = '#0a0e1a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+                for (let i = 0; i < COLS; i++) for (let j = 0; j < ROWS; j++) ctx.strokeRect(i*GRID, j*GRID, GRID, GRID);
+                snake.forEach((s, i) => {
+                    ctx.fillStyle = i === 0 ? '#4CAF50' : `rgba(76,175,80,${1 - (i / snake.length) * 0.5})`;
+                    ctx.fillRect(s.x*GRID+1, s.y*GRID+1, GRID-2, GRID-2);
+                });
+                ctx.fillStyle = '#f44336';
+                ctx.beginPath();
+                ctx.arc(food.x*GRID+GRID/2, food.y*GRID+GRID/2, GRID/2-2, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#4CAF50';
+                ctx.font = 'bold 32px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('CULEBRITA', canvas.width/2, canvas.height/2 - 20);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '16px Inter, sans-serif';
+                ctx.fillText('Selecciona un nivel para comenzar', canvas.width/2, canvas.height/2 + 15);
+            }
+
+            function draw() {
+                ctx.fillStyle = '#0a0e1a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+                for (let i = 0; i < COLS; i++) for (let j = 0; j < ROWS; j++) ctx.strokeRect(i*GRID, j*GRID, GRID, GRID);
+                snake.forEach((s, i) => {
+                    const alpha = 1 - (i / snake.length) * 0.5;
+                    ctx.fillStyle = i === 0 ? '#4CAF50' : `rgba(76,175,80,${alpha})`;
+                    ctx.shadowColor = '#4CAF50';
+                    ctx.shadowBlur = i === 0 ? 8 : 0;
+                    ctx.fillRect(s.x*GRID+1, s.y*GRID+1, GRID-2, GRID-2);
+                    ctx.shadowBlur = 0;
+                });
+                ctx.fillStyle = '#f44336';
+                ctx.shadowColor = '#f44336';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(food.x*GRID+GRID/2, food.y*GRID+GRID/2, GRID/2-2, 0, Math.PI*2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                if (gameOver) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#f44336';
+                    ctx.font = 'bold 36px Inter, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 15);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '20px Inter, sans-serif';
+                    ctx.fillText(`Puntaje: ${score}`, canvas.width/2, canvas.height/2 + 20);
+                }
+                if (paused && !gameOver) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#FFD700';
+                    ctx.font = 'bold 28px Inter, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('PAUSA', canvas.width/2, canvas.height/2);
+                }
+            }
+
+            function update() {
+                if (gameOver || paused || !started) return;
+                dir = nextDir;
+                const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+                if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) { gameOver = true; draw(); return; }
+                if (snake.some(s => s.x === head.x && s.y === head.y)) { gameOver = true; draw(); return; }
+                snake.unshift(head);
+                if (head.x === food.x && head.y === food.y) {
+                    score++;
+                    scoreEl.textContent = score;
+                    placeFood();
+                } else { snake.pop(); }
+            }
+
+            function gameLoop() { update(); draw(); }
+
+            function restartLoop() {
+                if (loop) clearInterval(loop);
+                loop = null;
+                if (started && !gameOver) loop = setInterval(gameLoop, speed);
+            }
+
+            function openGame() {
+                resizeCanvas();
+                modal.classList.add('active');
+                init();
+            }
+
+            function closeGame() {
+                modal.classList.remove('active');
+                if (loop) { clearInterval(loop); loop = null; }
+            }
+
+            document.getElementById('snakeLvl1').addEventListener('click', function() { startGame(1); });
+            document.getElementById('snakeLvl2').addEventListener('click', function() { startGame(2); });
+            document.getElementById('snakeLvl3').addEventListener('click', function() { startGame(3); });
+
+            btnOpen.addEventListener('click', openGame);
+            document.getElementById('snakeSidebarBtn').addEventListener('click', function(e) { e.preventDefault(); openGame(); });
+            btnClose.addEventListener('click', closeGame);
+            modal.addEventListener('click', function(e) { if (e.target === modal) closeGame(); });
+            btnRestart.addEventListener('click', function() { init(); });
+
+            document.addEventListener('keydown', function(e) {
+                if (!modal.classList.contains('active')) return;
+                const key = e.key.toLowerCase();
+                if (!started && !gameOver) {
+                    if (key === '1') startGame(1);
+                    else if (key === '2') startGame(2);
+                    else if (key === '3') startGame(3);
+                    return;
+                }
+                if ((key === 'arrowup' || key === 'w') && dir.y === 0) nextDir = {x:0, y:-1};
+                else if ((key === 'arrowdown' || key === 's') && dir.y === 0) nextDir = {x:0, y:1};
+                else if ((key === 'arrowleft' || key === 'a') && dir.x === 0) nextDir = {x:-1, y:0};
+                else if ((key === 'arrowright' || key === 'd') && dir.x === 0) nextDir = {x:1, y:0};
+                else if (key === ' ') { e.preventDefault(); paused = !paused; }
+                else if (gameOver && key === 'enter') { init(); }
+            });
+
+            window.addEventListener('resize', function() {
+                if (modal.classList.contains('active') && started && !gameOver) {
+                    resizeCanvas();
+                    placeFood();
+                    draw();
+                }
+            });
+
+            if (window.location.search.includes('game=snake')) openGame();
+        })();
+
+
+    </script>
+</body>
+</html>

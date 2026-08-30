@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentos Oficiales - J.A.C BATEAS 3</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/design-system.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);</script>
+    <style>
+        .content-area { display:flex; flex:1; overflow:hidden; padding:30px; align-items:center; justify-content:center; }
+        .main-content { display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+        .docs-wrapper { width:100%; max-width:700px; }
+        .docs-header { text-align:center; margin-bottom:30px; }
+        .docs-header h2 { font-size:1.4rem; font-weight:800; color:var(--text-primary); margin:0 0 6px 0; }
+        .docs-header p { color:var(--text-secondary); font-size:0.85rem; margin:0; }
+        .doc-card { background:var(--bg-card); border-radius:16px; border:1px solid var(--border-glass); margin-bottom:16px; overflow:hidden; transition:all 0.3s; }
+        .doc-card:hover { transform:translateY(-3px); box-shadow:0 12px 40px rgba(0,0,0,0.3); }
+        .doc-card-inner { display:flex; align-items:center; gap:20px; padding:20px 24px; }
+        .doc-icon-wrap { width:56px; height:56px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .doc-icon-wrap.blue { background:linear-gradient(135deg, rgba(59,130,246,0.2), rgba(99,102,241,0.2)); }
+        .doc-icon-wrap.blue i { color:var(--accent-blue); }
+        .doc-icon-wrap.cyan { background:linear-gradient(135deg, rgba(6,182,212,0.2), rgba(59,130,246,0.2)); }
+        .doc-icon-wrap.cyan i { color:var(--accent-cyan); }
+        .doc-icon-wrap i { font-size:1.5rem; }
+        .doc-details { flex:1; min-width:0; }
+        .doc-details h3 { font-size:1rem; font-weight:700; color:var(--text-primary); margin:0 0 4px 0; }
+        .doc-details p { font-size:0.78rem; color:var(--text-secondary); margin:0; }
+        .doc-btns { display:flex; gap:6px; flex-shrink:0; flex-wrap:wrap; }
+        .doc-btn { padding:6px 12px; border:none; border-radius:8px; font-size:0.7rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.2s; font-family:'Inter',sans-serif; color:white; }
+        .doc-btn-view { background:linear-gradient(135deg, #3b82f6, #6366f1); }
+        .doc-btn-view:hover { transform:translateY(-2px); box-shadow:0 4px 15px rgba(59,130,246,0.4); }
+        .doc-btn-pdf { background:linear-gradient(135deg, #ef4444, #dc2626); }
+        .doc-btn-pdf:hover { transform:translateY(-2px); box-shadow:0 4px 15px rgba(239,68,68,0.4); }
+        .doc-btn-print { background:linear-gradient(135deg, #f59e0b, #d97706); }
+        .doc-btn-print:hover { transform:translateY(-2px); box-shadow:0 4px 15px rgba(245,158,11,0.4); }
+        .doc-btn-back { background:linear-gradient(135deg, #6b7280, #4b5563); }
+        .doc-btn-back:hover { transform:translateY(-2px); }
+
+        #vistaDoc { display:none; overflow-y:auto; max-height:calc(100vh - 140px); width:100%; max-width:21.59cm; background:white; color:#000; padding:1cm 2cm; border-radius:12px; box-shadow:0 5px 20px rgba(0,0,0,0.3); }
+
+        .preview-toolbar { display:flex; justify-content:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+        #vistaDoc iframe { width:100%; border:none; min-height:80vh; }
+        #vistaDoc .doc-header { text-align:center; margin-bottom:0.8cm; }
+        #vistaDoc .doc-header h1 { font-size:14pt; color:#2c3e50; margin:5px 0; text-transform:uppercase; }
+        #vistaDoc .doc-title { font-size:14pt; font-weight:bold; text-align:center; text-decoration:underline; margin:0.3cm 0 0.5cm 0; }
+        #vistaDoc .doc-content { font-size:12.5pt; text-align:justify; line-height:1.3; }
+        #vistaDoc h2 { font-size:13pt; color:#2c3e50; font-weight:bold; margin:0.7cm 0 0.4cm 0; }
+        #vistaDoc ul { margin:0.4cm 0 0.4cm 1.5cm; padding:0; }
+        #vistaDoc li { margin-bottom:0.25cm; line-height:1.5; }
+        #vistaDoc .sig-section { margin-top:1.2cm; }
+        #vistaDoc .sig-center { text-align:center; margin-top:1.8cm; }
+        #vistaDoc .sig-line { border-top:1px solid #333; width:60%; margin:0 auto; text-align:center; padding-top:8px; font-size:12.5pt; }
+        #vistaDoc .cc-center { margin-top:15px; font-size:12.5pt; text-align:center; }
+        #vistaDoc .doc-footer { text-align:center; font-size:10pt; margin-top:auto; padding-top:0.5cm; color:#777; }
+
+        @media print {
+            .sidebar, .topbar, .preview-toolbar { display:none !important; }
+            .main-content { height:auto; overflow:visible; }
+            .content-area { padding:0; align-items:flex-start !important; }
+            #listaDocs { display:none !important; }
+            #vistaDoc { display:block !important; max-width:none; box-shadow:none; border-radius:0; padding:0; max-height:none; overflow:visible; }
+            #vistaDoc iframe { min-height:auto; height:100vh; width:100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="../assets/images/Escudo.png" alt="Escudo" class="sidebar-logo">
+                <div>
+                    <div class="sidebar-brand">J.A.C BATEAS 3</div>
+                    <div class="sidebar-subtitle">Sector 3 - Puerto Gaitan</div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a class="nav-item" href="panel_new.html"><i class="fas fa-th-large"></i><span>Panel</span></a>
+                <a class="nav-item" href="registro_new.html"><i class="fas fa-user-plus"></i><span>Registro</span></a>
+                <a class="nav-item" href="afiliaciones_new.html"><i class="fas fa-users"></i><span>Afiliaciones</span></a>
+                <a class="nav-item" href="certificados5_new.html"><i class="fas fa-certificate"></i><span>Cert. Afiliacion</span></a>
+                <a class="nav-item" href="registro_vecinos.html"><i class="fas fa-user-friends"></i><span>Registro Vecinos</span></a>
+                <a class="nav-item" href="carta-vecina.html"><i class="fas fa-scroll"></i><span>Cert Vecino</span></a>
+                <a class="nav-item" href="certificados5_copia.html"><i class="fas fa-file-alt"></i><span>Constancia No Inscripcion</span></a>
+                <a class="nav-item" href="traslado_new.html"><i class="fas fa-exchange-alt"></i><span>Cert. Traslado</span></a>
+                <a class="nav-item" href="certificadovotacion_new.html"><i class="fas fa-vote-yea"></i><span>Cert. Votaciones</span></a>
+                <a class="nav-item" href="asistencia_new.html"><i class="fas fa-clipboard-check"></i><span>Asistencia</span></a>
+                <a class="nav-item active" href="documentos_new.html"><i class="fas fa-folder-open"></i><span>Documentos</span></a>
+                <a class="nav-item" href="contador_new.html"><i class="fas fa-chart-line"></i><span>Reporte Pagos</span></a>
+                <a class="nav-item" href="informes_new.html"><i class="fas fa-file-alt"></i><span>Informes</span></a>
+                <a class="nav-item" href="gastos.html"><i class="fas fa-money-bill-wave"></i><span>Gastos</span></a>
+                <a class="nav-item" href="tesoreria.html"><i class="fas fa-wallet"></i><span>Tesoreria</span></a>
+                <a class="nav-item" href="panel_new.html?game=snake"><i class="fas fa-gamepad"></i><span>Culebrita</span></a>
+                <a class="nav-item" href="usuarios_new.html"><i class="fas fa-users-cog"></i><span>Usuarios</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn-icon" id="themeToggle"><i class="fas fa-moon"></i></button>
+                <button class="btn-icon" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="btn-icon sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title">Documentos Oficiales</h1>
+                </div>
+                <div class="topbar-right">
+                    <span class="current-date" id="currentDate"></span>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <div class="docs-wrapper" id="listaDocs">
+                    <div class="docs-header">
+                        <h2>Documentos de la J.A.C</h2>
+                        <p>Acceda, descargue e imprima los documentos oficiales del barrio</p>
+                    </div>
+
+                    <div class="doc-card">
+                        <div class="doc-card-inner">
+                            <div class="doc-icon-wrap blue"><i class="fas fa-shield-alt"></i></div>
+                            <div class="doc-details">
+                                <h3>Tratamiento de Datos</h3>
+                                <p>Autorizacion para el tratamiento de datos personales segun Ley 1581 de 2012</p>
+                            </div>
+                            <div class="doc-btns">
+                                <button class="doc-btn doc-btn-view" onclick="verTratamiento()"><i class="fas fa-eye"></i> Ver</button>
+                                <a href="Consentimiento Tratamiento de Datos.pdf" download class="doc-btn doc-btn-pdf"><i class="fas fa-file-pdf"></i> PDF</a>
+                                <button class="doc-btn doc-btn-print" onclick="imprimirTratamiento()"><i class="fas fa-print"></i> Imprimir</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="doc-card">
+                        <div class="doc-card-inner">
+                            <div class="doc-icon-wrap cyan"><i class="fas fa-clipboard-check"></i></div>
+                            <div class="doc-details">
+                                <h3>Formato de Visita</h3>
+                                <p>Formato de verificacion de residencia para proceso de afiliacion</p>
+                            </div>
+                            <div class="doc-btns">
+                                <button class="doc-btn doc-btn-view" onclick="verVisita()"><i class="fas fa-eye"></i> Ver</button>
+                                <a href="VISITA.pdf" download class="doc-btn doc-btn-pdf"><i class="fas fa-file-pdf"></i> PDF</a>
+                                <button class="doc-btn doc-btn-print" onclick="imprimirVisita()"><i class="fas fa-print"></i> Imprimir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="vistaDoc">
+                    <div class="preview-toolbar">
+                        <button class="doc-btn doc-btn-back" onclick="volverLista()"><i class="fas fa-arrow-left"></i> Volver</button>
+                        <button class="doc-btn doc-btn-print" id="btnImprimir" onclick="imprimirVista()"><i class="fas fa-print"></i> Imprimir</button>
+                        <a id="btnDescargaPdf" href="#" download class="doc-btn doc-btn-pdf"><i class="fas fa-file-pdf"></i> Descargar PDF</a>
+                    </div>
+                    <div id="documentoContenido"></div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+    var docs = {
+        tratamiento: '<div class="doc-header"><h1>JUNTA DE ACCIÓN COMUNAL</h1><h1>BARRIO BATEAS - SECTOR 3</h1><p><strong>PUERTO GAITÁN, META</strong></p></div><div class="doc-title">AUTORIZACIÓN PARA EL TRATAMIENTO DE DATOS PERSONALES</div><div class="doc-content"><p>Yo, <strong>_________________________________________</strong>, identificado(a) con <strong>Cédula de Ciudadanía</strong> No. <strong>____________________</strong> expedida en <strong>____________________</strong>, en mi calidad de afiliado(a) a la Junta de Acción Comunal del Barrio Bateas - Sector 3 de Puerto Gaitán, Meta, en ejercicio de mis derechos constitucionales y legales, <strong>MANIFIESTO</strong> que de manera libre, previa, expresa, voluntaria, informada e inequívoca <strong>AUTORIZO</strong> a la Junta de Acción Comunal del Barrio Bateas - Sector 3 para que realice el tratamiento de mis datos personales suministrados, de acuerdo con lo establecido en la Ley 1581 de 2012 y el Decreto 1377 de 2013.</p><h2>1. FINALIDAD DEL TRATAMIENTO</h2><p>La Junta de Acción Comunal utilizará mis datos personales para los siguientes fines:</p><ul><li>Gestión de afiliación y membresía a la Junta de Acción Comunal</li><li>Comunicación de actividades, eventos y convocatorias</li><li>Control y seguimiento de pagos de cuotas ordinarias y extraordinarias</li><li>Elaboración de certificados y constancias de afiliación</li><li>Gestión administrativa interna de la organización</li><li>Cumplimiento de obligaciones legales y estatutarias</li></ul><h2>2. DATOS QUE SERÁN TRATADOS</h2><p>Autorizo el tratamiento de los siguientes datos personales:</p><ul><li>Nombres y apellidos completos</li><li>Número de documento de identidad</li><li>Dirección de residencia</li><li>Números telefónicos y dirección de correo electrónico</li><li>Fecha de nacimiento</li><li>Información de afiliación (fecha, número de registro, etc.)</li><li>Historial de pagos y contribuciones</li><li>Historial de asistencia a las asambleas</li></ul><h2>3. DERECHOS DEL TITULAR</h2><p>Como titular de los datos, conozco que tengo derecho a:</p><ul><li>Conocer, actualizar y rectificar mis datos personales</li><li>Solicitar prueba de la autorización otorgada</li><li>Ser informado sobre el uso que se ha dado a mis datos</li><li>Presentar quejas ante la Superintendencia de Industria y Comercio</li><li>Revocar la autorización y/o solicitar la supresión del dato</li><li>Acceder en forma gratuita a mis datos personales</li></ul><h2>4. ALMACENAMIENTO EN LA NUBE</h2><p>Los datos personales serán almacenados en plataformas en la nube (servidores virtuales) como respaldo de la información, para apoyar procesos automatizados como la elaboración de documentos, certificados, control de pagos y demás gestiones administrativas de la Junta de Acción Comunal.</p><h2>5. VIGENCIA</h2><p>La presente autorización tendrá una vigencia igual al tiempo que mantenga mi condición de afiliado(a) a la Junta de Acción Comunal del Barrio Bateas - Sector 3 y hasta que se cumplan las finalidades necesarias para el tratamiento de los datos.</p><div class="sig-section"><p style="line-height:1.8;">En constancia de lo anterior, firmo en Puerto Gaitán, Meta, a los <strong>____</strong> días del mes de <strong>____________________</strong> del <strong>________</strong>.</p><div class="sig-center"><div class="sig-line">Firma del Afiliado</div><div class="cc-center">CC: _________________________</div></div></div><div class="doc-footer"><p><strong>Junta de Acción Comunal Barrio Bateas - Sector 3</strong> - Puerto Gaitán, Meta</p><p>Teléfono: 310 870 8550 - Correo: juntacomunalbateassector3@gmail.com</p></div></div>'
+    };
+
+    function volverLista() {
+        document.getElementById('vistaDoc').style.display = 'none';
+        document.getElementById('documentoContenido').innerHTML = '';
+        document.getElementById('listaDocs').style.display = '';
+        document.querySelector('.content-area').style.alignItems = 'center';
+    }
+
+    function verTratamiento() { mostrarDocIframe('tratamientodedatos_new.html', 'Consentimiento Tratamiento de Datos.pdf'); }
+    function imprimirTratamiento() { verTratamiento(); }
+
+    function mostrarDocHtml(html, pdfFile) {
+        document.getElementById('listaDocs').style.display = 'none';
+        document.getElementById('vistaDoc').style.display = 'block';
+        document.getElementById('vistaDoc').style.padding = '1cm 2cm';
+        document.getElementById('documentoContenido').innerHTML = html;
+        document.getElementById('btnDescargaPdf').href = pdfFile;
+        document.getElementById('btnDescargaPdf').download = pdfFile;
+        document.querySelector('.content-area').style.alignItems = 'flex-start';
+    }
+
+    function mostrarDocIframe(url, pdfFile) {
+        document.getElementById('listaDocs').style.display = 'none';
+        document.getElementById('vistaDoc').style.display = 'block';
+        document.getElementById('vistaDoc').style.padding = '0';
+        document.getElementById('documentoContenido').innerHTML = '<iframe src="' + url + '" style="width:100%;border:none;min-height:80vh;"></iframe>';
+        document.getElementById('btnDescargaPdf').href = pdfFile;
+        document.getElementById('btnDescargaPdf').download = pdfFile;
+        document.querySelector('.content-area').style.alignItems = 'flex-start';
+    }
+
+    function verVisita() { mostrarDocIframe('visita.html', 'VISITA.pdf'); }
+    function imprimirVisita() { mostrarDocIframe('visita.html', 'VISITA.pdf'); }
+
+    function imprimirVista() {
+        var iframe = document.querySelector('#documentoContenido iframe');
+        if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.print();
+        } else {
+            window.print();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('es-ES', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        });
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            if (confirm('Cerrar sesion?')) {
+                firebase.auth().signOut().then(function() { window.location.href = 'index_new.html'; });
+            }
+        });
+        var saved = localStorage.getItem('theme') || 'dark';
+        document.documentElement.dataset.theme = saved;
+        var icon = document.querySelector('#themeToggle i');
+        if(icon) icon.className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+            document.documentElement.dataset.theme = next;
+            localStorage.setItem('theme', next);
+            var icon = document.querySelector('#themeToggle i');
+            if(icon) icon.className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        });
+    });
+    </script>
+</body>
+</html>

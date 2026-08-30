@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Afiliaciones</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/design-system.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="styles/afiliaciones.css">
+    <script src="lib/jspdf.umd.min.js"></script>
+    <script src="lib/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body { overflow: hidden; }
+    </style>
+    <style>
+        .header-badges {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .badge {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            background: var(--bg-tertiary, #334155);
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .filter-panel {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 24px;
+            background: var(--bg-secondary, #1e293b);
+            border-bottom: 1px solid var(--border-color, #334155);
+        }
+        .filter-panel input {
+            flex: 1;
+            padding: 8px 14px;
+            border: 1px solid var(--border-color, #334155);
+            border-radius: 8px;
+            background: var(--bg-primary, #0f172a);
+            color: var(--text-primary, #e2e8f0);
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .filter-panel input:focus {
+            border-color: var(--accent-primary, #3b82f6);
+        }
+        .filter-panel input::placeholder { color: var(--text-tertiary, #64748b); }
+        .btn-limpiar {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color, #334155);
+            border-radius: 8px;
+            background: var(--bg-tertiary, #334155);
+            color: var(--text-secondary, #94a3b8);
+            cursor: pointer;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-limpiar:hover { background: var(--accent-primary, #3b82f6); color: #fff; border-color: var(--accent-primary, #3b82f6); }
+
+        .buttons-row {
+            display: flex;
+            gap: 8px;
+            padding: 10px 24px;
+            flex-wrap: wrap;
+            background: var(--bg-secondary, #1e293b);
+            border-bottom: 1px solid var(--border-color, #334155);
+        }
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border: 1px solid var(--border-color, #334155);
+            border-radius: 8px;
+            background: var(--bg-tertiary, #334155);
+            color: var(--text-secondary, #94a3b8);
+            cursor: pointer;
+            font-size: 12px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-action:hover { background: var(--accent-primary, #3b82f6); color: #fff; border-color: var(--accent-primary, #3b82f6); }
+        .btn-action.btn-primary { background: var(--accent-primary, #3b82f6); color: #fff; border-color: var(--accent-primary, #3b82f6); }
+        .btn-action.btn-primary:hover { background: #2563eb; }
+        .btn-action.btn-success { background: #10b981; color: #fff; border-color: #10b981; }
+        .btn-action.btn-success:hover { background: #059669; }
+        .btn-action.btn-warning { background: #f59e0b; color: #fff; border-color: #f59e0b; }
+        .btn-action.btn-warning:hover { background: #d97706; }
+        .btn-action.btn-danger { background: #ef4444; color: #fff; border-color: #ef4444; }
+        .btn-action.btn-danger:hover { background: #dc2626; }
+
+        .table-container {
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: auto;
+            min-height: 200px;
+            padding: 0px 14px 14px 14px;
+        }
+        .table-container table {
+            border-collapse: collapse;
+            width: 100%;
+            table-layout: fixed;
+            min-width: 700px;
+            font-size: 12px;
+            font-family: 'Inter', sans-serif;
+            margin-top: -2px;
+        }
+        .table-container thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--bg-tertiary, #334155);
+            color: var(--text-primary, #e2e8f0);
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--accent-primary, #3b82f6);
+        }
+        #tbodyAfiliaciones tr.selected {
+            background: rgba(59, 130, 246, 0.2) !important;
+            outline: 2px solid var(--accent-primary, #3b82f6);
+        }
+            white-space: nowrap;
+        }
+        .table-container tbody tr {
+            border-bottom: 1px solid var(--border-color, #1e293b);
+            transition: background 0.15s;
+        }
+        .table-container tbody tr:hover { background: var(--bg-tertiary, #1e293b); }
+        .table-container tbody tr.selected { background: rgba(59,130,246,0.15); }
+        .table-container tbody td {
+            padding: 8px;
+            color: var(--text-primary, #e2e8f0);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+            cursor: pointer;
+        }
+        .table-container tbody td:focus { outline: 2px solid var(--accent-primary, #3b82f6); outline-offset: -2px; }
+        .table-container tbody td input {
+            width: 100%;
+            border: 2px solid var(--accent-primary, #3b82f6);
+            background: var(--bg-primary, #0f172a);
+            color: var(--text-primary, #e2e8f0);
+            padding: 4px 6px;
+            font-size: 12px;
+            font-family: 'Inter', sans-serif;
+            border-radius: 4px;
+            outline: none;
+        }
+        .col-nombre { min-width: 170px; }
+        .col-cedula { min-width: 65px; text-align: center !important; }
+        .col-direccion { min-width: 120px; text-align: center !important; }
+        .table-container tbody td.col-cedula { text-align: right !important; }
+        .table-container tbody td.col-direccion { text-align: right !important; }
+        .col-fecha { text-align: center !important; }
+        .col-registro { text-align: center !important; }
+        .col-folio { text-align: center !important; }
+        .col-renglon { text-align: center !important; }
+        .columna-oculta { display: none; }
+        .columna-firma-oculta { display: none; }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 24px;
+            background: var(--bg-tertiary, #1e293b);
+            border-top: 1px solid var(--border-color, #334155);
+            font-size: 11px;
+            color: var(--text-tertiary, #64748b);
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 9000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--bg-secondary, #1e293b);
+            border: 1px solid var(--border-color, #334155);
+            border-radius: 12px;
+            width: 720px;
+            max-width: 95vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color, #334155);
+        }
+        .modal-header h2 { margin: 0; font-size: 16px; color: var(--text-primary, #e2e8f0); }
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-tertiary, #64748b);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .modal-close:hover { background: var(--bg-tertiary, #334155); color: var(--text-primary, #e2e8f0); }
+        .modal-body { padding: 20px; }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-color, #334155);
+        }
+        .form-group { margin-bottom: 14px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary, #94a3b8);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color, #334155);
+            border-radius: 8px;
+            background: var(--bg-primary, #0f172a);
+            color: var(--text-primary, #e2e8f0);
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+        }
+        .form-group input:focus, .form-group select:focus { border-color: var(--accent-primary, #3b82f6); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        .config-section {
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color, #1e293b);
+        }
+        .config-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .config-section h3 {
+            margin: 0 0 12px 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-primary, #3b82f6);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .column-config-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .column-config-table th {
+            padding: 8px;
+            text-align: left;
+            background: var(--bg-tertiary, #334155);
+            color: var(--text-secondary, #94a3b8);
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border-color, #334155);
+        }
+        .column-config-table td {
+            padding: 6px 8px;
+            color: var(--text-primary, #e2e8f0);
+            border-bottom: 1px solid var(--border-color, #1e293b);
+        }
+        .column-config-table input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        .column-config-table input[type="number"],
+        .column-config-table input[type="text"] {
+            width: 60px;
+            padding: 4px 6px;
+            font-size: 12px;
+        }
+        .column-config-table select {
+            padding: 4px 6px;
+            font-size: 12px;
+        }
+        .btn-add-column {
+            padding: 6px 12px;
+            border: 1px dashed var(--accent-primary, #3b82f6);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--accent-primary, #3b82f6);
+            cursor: pointer;
+            font-size: 12px;
+            font-family: 'Inter', sans-serif;
+            margin-top: 8px;
+            transition: all 0.2s;
+        }
+        .btn-add-column:hover { background: rgba(59,130,246,0.1); }
+    </style>
+    <link rel="stylesheet" href="styles/mobile.css"></head>
+<body>
+    <!-- Loading Screen -->
+    <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="assets/images/Escudo.png" alt="Escudo" class="sidebar-logo">
+            <div>
+                <div class="sidebar-brand">J.A.C BATEAS 3</div>
+                <div class="sidebar-subtitle">Sector 3 - Puerto Gaitan</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="panel_new.html" class="nav-item">
+                <i class="fas fa-th-large"></i><span>Panel</span>
+            </a>
+            <a href="registro_new.html" class="nav-item">
+                <i class="fas fa-user-plus"></i><span>Registro</span>
+            </a>
+            <a href="afiliaciones_new.html" class="nav-item active">
+                <i class="fas fa-users"></i><span>Afiliaciones</span>
+            </a>
+            <a href="certificados5_new.html" class="nav-item">
+                <i class="fas fa-certificate"></i><span>Cert. Afiliacion</span>
+            </a>
+            <a class="nav-item" href="registro_vecinos.html"><i class="fas fa-user-friends"></i><span>Registro Vecinos</span></a>
+            <a class="nav-item" href="carta-vecina.html"><i class="fas fa-scroll"></i><span>Cert Vecino</span></a>
+            <a href="certificados5_copia.html" class="nav-item">
+                <i class="fas fa-file-alt"></i><span>Constancia No Inscripcion</span>
+            </a>
+            <a href="traslado_new.html" class="nav-item">
+                <i class="fas fa-exchange-alt"></i><span>Cert. Traslado</span>
+            </a>
+            <a href="certificadovotacion_new.html" class="nav-item">
+                <i class="fas fa-vote-yea"></i><span>Cert. Votaciones</span>
+            </a>
+            <a href="asistencia_new.html" class="nav-item">
+                <i class="fas fa-clipboard-check"></i><span>Asistencia</span>
+            </a>
+            <a href="documentos_new.html" class="nav-item">
+                <i class="fas fa-folder-open"></i><span>Documentos</span>
+            </a>
+            <a href="contador_new.html" class="nav-item">
+                <i class="fas fa-chart-line"></i><span>Reporte Pagos</span>
+            </a>
+            <a href="informes_new.html" class="nav-item">
+                <i class="fas fa-file-alt"></i><span>Informes</span>
+            </a>
+            <a class="nav-item" href="gastos.html"><i class="fas fa-money-bill-wave"></i><span>Gastos</span></a>
+            <a class="nav-item" href="tesoreria.html"><i class="fas fa-wallet"></i><span>Tesoreria</span></a>
+            <a class="nav-item" href="panel_new.html?game=snake"><i class="fas fa-gamepad"></i><span>Culebrita</span></a>
+            <a class="nav-item" href="usuarios_new.html"><i class="fas fa-users-cog"></i><span>Usuarios</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="btn-icon" id="themeToggle" title="Cambiar tema">
+                <i class="fas fa-moon"></i>
+            </button>
+            <button class="btn-icon" id="logoutBtn" title="Cerrar sesion">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="btn-icon sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+                <h1 class="page-title">EDITOR DE AFILIACIONES</h1>
+            </div>
+            <div class="topbar-right">
+                <span class="badge badge-outline" id="rowCount"><i class="fas fa-database" style="margin-right:4px"></i><span id="rowCountText">0 registros</span></span>
+                <span class="badge badge-primary" id="folioInfo"><i class="fas fa-bookmark" style="margin-right:4px"></i>Folio: -</span>
+                <span class="badge badge-outline" id="fechaHoraBadge"><i class="fas fa-clock" style="margin-right:4px"></i><span id="fechaHoraText"></span></span>
+            </div>
+        </header>
+
+        <!-- Filter -->
+        <div class="filter-panel">
+            <input type="text" id="searchInput" placeholder="Buscar por nombre, cedula, direccion..." autocomplete="off">
+            <button class="btn-limpiar" id="btnLimpiar" title="Limpiar filtro">
+                <i class="fas fa-times"></i> Limpiar
+            </button>
+        </div>
+
+        <!-- Buttons Row -->
+        <div class="buttons-row">
+            <button class="btn-action" id="btnVolver" title="Volver al Panel">
+                <i class="fas fa-arrow-left"></i> Volver Panel
+            </button>
+            <button class="btn-action btn-primary" id="btnNuevo" title="Nuevo registro">
+                <i class="fas fa-plus"></i> Nuevo Registro
+            </button>
+            <button class="btn-action" id="btnJSONLoad" title="Cargar archivo JSON">
+                <i class="fas fa-file-import"></i> JSON
+            </button>
+            <button class="btn-action btn-success" id="btnDescargar" title="Descargar JSON">
+                <i class="fas fa-download"></i> Descargar
+            </button>
+            <button class="btn-action btn-warning" id="btnPDF" title="Exportar a PDF">
+                <i class="fas fa-file-pdf"></i> PDF
+            </button>
+            <button class="btn-action" id="btnUltimo" title="Ir al ultimo registro">
+                <i class="fas fa-arrow-down"></i> Ultimo
+            </button>
+            <button class="btn-action" id="btnEliminar" title="Eliminar registro seleccionado" style="background:#dc3545;color:#fff;border-color:#dc3545;">
+                <i class="fas fa-trash-alt"></i> Eliminar
+            </button>
+            <button class="btn-action" id="btnModificar" title="Desbloquear ID, Registro, Folio, Renglon para editar" style="background:#6f42c1;color:#fff;border-color:#6f42c1;">
+                <i class="fas fa-lock-open"></i> Modificar
+            </button>
+            <button class="btn-action" id="btnGuardar" title="Guardar local y nube" style="background:#28a745;color:#fff;border-color:#28a745;">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container" id="tableContainer">
+            <table id="tablaAfiliaciones">
+                <thead>
+                    <tr>
+                        <th style="width:30px">ID</th>
+                        <th style="width:170px" class="col-nombre">NOMBRE COMPLETO</th>
+                        <th style="width:65px" class="col-cedula">CEDULA</th>
+                        <th style="width:70px" class="col-fecha">FECHA AFILIACION</th>
+                        <th style="width:50px" class="col-registro">REGISTRO</th>
+                        <th style="width:50px" class="col-folio">FOLIO</th>
+                        <th style="width:50px" class="col-renglon">RENGLON</th>
+                        <th style="width:120px" class="col-direccion">DIRECCION</th>
+                        <th style="width:90px">TELEFONO</th>
+                        <th class="columna-oculta">PAGOS</th>
+                        <th class="columna-firma-oculta">FIRMA</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyAfiliaciones"></tbody>
+            </table>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span id="statusArchivo">Archivo: afiliaciones.json</span>
+            <span id="statusEdicion">Sin cambios</span>
+        </div>
+    </main>
+
+    <!-- Hidden file input -->
+    <input type="file" id="fileInput" accept=".json" style="display:none">
+
+    <!-- PDF Config Modal -->
+    <div class="modal-overlay" id="modalPDF">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Configuracion de Exportacion PDF</h2>
+                <button class="modal-close" id="modalClosePDF"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <!-- Titles -->
+                <div class="config-section">
+                    <h3>Titulos</h3>
+                    <div class="form-group">
+                        <label>Titulo Principal</label>
+                        <input type="text" id="pdfTitle1" value="JUNTA DE ACCION COMUNAL DEL BARRIO BATEAS SECTOR 3">
+                    </div>
+                    <div class="form-group">
+                        <label>Subtitulo</label>
+                        <input type="text" id="pdfTitle2" value="PUERTO GAITAN META">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Linea 3</label>
+                            <input type="text" id="pdfTitle3" value="ASAMBLEA PREVIA">
+                        </div>
+                        <div class="form-group">
+                            <label>Linea 4</label>
+                            <input type="text" id="pdfTitle4" value="ASISTENCIA DE AFILIADOS">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Linea 5 (Fecha)</label>
+                        <input type="text" id="pdfTitle5" value="{{fecha}}">
+                    </div>
+                </div>
+
+                <!-- Page Config -->
+                <div class="config-section">
+                    <h3>Configuracion de Pagina</h3>
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label>Orientacion</label>
+                            <select id="pdfOrientation">
+                                <option value="landscape" selected>Paisaje</option>
+                                <option value="portrait">Retrato</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tamano</label>
+                            <select id="pdfSize">
+                                <option value="letter" selected>Carta</option>
+                                <option value="a4">A4</option>
+                                <option value="legal">Oficio</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Margen (mm)</label>
+                            <input type="number" id="pdfMargin" value="10" min="0" max="50">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Design -->
+                <div class="config-section">
+                    <h3>Diseño</h3>
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label>Color Titulo</label>
+                            <input type="color" id="pdfTitleColor" value="#1a237e">
+                        </div>
+                        <div class="form-group">
+                            <label>Color Encabezado</label>
+                            <input type="color" id="pdfHeaderColor" value="#0d47a1">
+                        </div>
+                        <div class="form-group">
+                            <label>Fondo Encabezado</label>
+                            <input type="color" id="pdfHeaderBg" value="#bbdefb">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Fuente Titulo</label>
+                            <select id="pdfTitleFont">
+                                <option value="helvetica" selected>Helvetica</option>
+                                <option value="times">Times</option>
+                                <option value="courier">Courier</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tamano Fuente Titulo</label>
+                            <input type="number" id="pdfTitleSize" value="14" min="8" max="24">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sort -->
+                <div class="config-section">
+                    <h3>Ordenamiento</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Ordenar por</label>
+                            <select id="pdfSortField">
+                                <option value="nombre">Nombre</option>
+                                <option value="cedula">Cedula</option>
+                                <option value="fecha_afiliacion">Fecha Afiliacion</option>
+                                <option value="registro">Registro</option>
+                                <option value="folio">Folio</option>
+                                <option value="renglon">Renglon</option>
+                                <option value="direccion">Direccion</option>
+                                <option value="telefono">Telefono</option>
+                                <option value="ninguno" selected>Ninguno</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Direccion</label>
+                            <select id="pdfSortDir">
+                                <option value="asc" selected>Ascendente</option>
+                                <option value="desc">Descendente</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columns -->
+                <div class="config-section">
+                    <h3>Columnas PDF</h3>
+                    <table class="column-config-table" id="pdfColumnTable">
+                        <thead>
+                            <tr>
+                                <th>Activar</th>
+                                <th>Columna</th>
+                                <th>Ancho (mm)</th>
+                                <th>Alineacion</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pdfColumnBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Custom Columns -->
+                <div class="config-section">
+                    <h3>Columnas Personalizadas</h3>
+                    <div id="customColumnsContainer"></div>
+                    <button class="btn-add-column" id="btnAddColumn">
+                        <i class="fas fa-plus"></i> Agregar Columna
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-action" id="btnCancelPDF">Cancelar</button>
+                <button class="btn-action btn-primary" id="btnExportPDF">
+                    <i class="fas fa-file-pdf"></i> Exportar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal Guardar antes de salir -->
+    <div class="modal-overlay" id="modalGuardar" style="z-index:9999;">
+        <div class="modal" style="max-width:400px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-exclamation-triangle" style="color:#dc3545;margin-right:8px;"></i>Cambios sin guardar</h2>
+            </div>
+            <div class="modal-body" style="text-align:center;">
+                <p style="color:var(--text-secondary,#94a3b8);font-size:14px;margin:0;">Tiene nuevos registros sin guardar. Debe guardar antes de cambiar de pagina.</p>
+            </div>
+            <div class="modal-footer" style="justify-content:center;gap:10px;">
+                <button class="btn-action" id="btnModalCancelar" style="background:#6c757d;color:#fff;border-color:#6c757d;">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button class="btn-action btn-primary" id="btnModalGuardar">
+                    <i class="fas fa-save"></i> Guardar y continuar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);</script>
+    <script src="mobile-bridge.js"></script><script src="core/event-bus.js"></script>
+    <script src="core/app-state.js"></script>
+    <script src="core/auth-service.js"></script>
+    <script src="core/data-service.js"></script>
+    <script src="shared/components/toast.js"></script>
+    <script src="shared/utils/formatters.js"></script>
+    <script src="shared/utils/app-name.js"></script>
+    <script>
+    (function() {
+        // Verificar sesion
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (!user) {
+                window.location.href = 'index_new.html';
+                return;
+            }
+        });
+
+        // State
+        let jsonData = [];
+        let editIndex = -1;
+        let editField = '';
+        let hasChanges = false;
+        let currentFilter = '';
+
+        function actualizarBotonGuardar() {
+            if (hasChanges) {
+                btnGuardar.style.background = '#dc3545';
+                btnGuardar.style.borderColor = '#dc3545';
+                btnGuardar.style.color = '#fff';
+                btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar *';
+            } else {
+                btnGuardar.style.background = '#28a745';
+                btnGuardar.style.borderColor = '#28a745';
+                btnGuardar.style.color = '#fff';
+                btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar';
+            }
+        }
+
+        const columns = [
+            { key: 'id', label: 'ID', width: 30, pdfWidth: 8, align: 'center', active: true },
+            { key: 'nombre', label: 'NOMBRE COMPLETO', width: 170, pdfWidth: 50, align: 'left', active: true },
+            { key: 'cedula', label: 'CEDULA', width: 65, pdfWidth: 25, align: 'right', active: true },
+            { key: 'fecha_afiliacion', label: 'FECHA AFILIACION', width: 70, pdfWidth: 25, align: 'center', active: true },
+            { key: 'registro', label: 'REGISTRO', width: 50, pdfWidth: 18, align: 'center', active: true },
+            { key: 'folio', label: 'FOLIO', width: 50, pdfWidth: 15, align: 'center', active: true },
+            { key: 'renglon', label: 'RENGLON', width: 50, pdfWidth: 18, align: 'center', active: true },
+            { key: 'direccion', label: 'DIRECCION', width: 120, pdfWidth: 40, align: 'left', active: true },
+            { key: 'telefono', label: 'TELEFONO', width: 90, pdfWidth: 25, align: 'center', active: true },
+            { key: 'pagos', label: 'PAGOS', width: 50, pdfWidth: 0, align: 'center', active: false, hidden: true },
+            { key: 'firma', label: 'FIRMA', width: 50, pdfWidth: 0, align: 'center', active: false, hidden: true }
+        ];
+
+        let customColumns = [];
+
+        // Elements
+        const tbody = document.getElementById('tbodyAfiliaciones');
+        const searchInput = document.getElementById('searchInput');
+        const btnLimpiar = document.getElementById('btnLimpiar');
+        const btnVolver = document.getElementById('btnVolver');
+        const btnNuevo = document.getElementById('btnNuevo');
+        const btnGuardar = document.getElementById('btnGuardar');
+        const btnJSONLoad = document.getElementById('btnJSONLoad');
+        const btnDescargar = document.getElementById('btnDescargar');
+        const btnPDF = document.getElementById('btnPDF');
+        const btnUltimo = document.getElementById('btnUltimo');
+        const btnEliminar = document.getElementById('btnEliminar');
+        const btnModificar = document.getElementById('btnModificar');
+        const fileInput = document.getElementById('fileInput');
+        const rowCountBadge = document.getElementById('rowCount');
+        const folioInfoBadge = document.getElementById('folioInfo');
+        const dateTimeBadge = document.getElementById('fechaHoraText');
+        const statusArchivo = document.getElementById('statusArchivo');
+        const statusEdicion = document.getElementById('statusEdicion');
+        const themeToggle = document.getElementById('themeToggle');
+        const modalPDF = document.getElementById('modalPDF');
+        const modalClosePDF = document.getElementById('modalClosePDF');
+        const btnCancelPDF = document.getElementById('btnCancelPDF');
+        const btnExportPDF = document.getElementById('btnExportPDF');
+        const pdfColumnBody = document.getElementById('pdfColumnBody');
+        const btnAddColumn = document.getElementById('btnAddColumn');
+
+        // Theme toggle
+        function setupTheme() {
+            const saved = localStorage.getItem('theme') || 'dark';
+            document.documentElement.dataset.theme = saved;
+            updateThemeIcon(saved);
+            document.getElementById('themeToggle').addEventListener('click', function() {
+                const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+                document.documentElement.dataset.theme = next;
+                localStorage.setItem('theme', next);
+                updateThemeIcon(next);
+            });
+            function updateThemeIcon(theme) {
+                const icon = document.querySelector('#themeToggle i');
+                icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+        setupTheme();
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            if (confirm('Cerrar sesion?')) {
+                firebase.auth().signOut().then(function() {
+                    window.location.href = 'index_new.html';
+                });
+            }
+        });
+
+        // Date/time
+        function mostrarFechaYHora() {
+            const now = new Date();
+            const d = now.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const t = now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            dateTimeBadge.textContent = d + ' ' + t;
+        }
+        mostrarFechaYHora();
+        setInterval(mostrarFechaYHora, 1000);
+
+        // Cedula formatting
+        function formatearCedula(valor) {
+            if (!valor) return '';
+            const numero = valor.toString().replace(/\D/g, '');
+            return numero.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        // Update badges
+        function actualizarBadges() {
+            rowCountBadge.textContent = jsonData.length + ' registros';
+            const maxFolio = jsonData.reduce(function(max, r) {
+                const f = parseInt(r.folio) || 0;
+                return f > max ? f : max;
+            }, 0);
+            folioInfoBadge.textContent = 'Folio: ' + (maxFolio > 0 ? maxFolio : '-');
+        }
+
+        // Create table
+        function crearTabla() {
+            tbody.innerHTML = '';
+            var filtered = jsonData.slice().sort(function(a, b) {
+                return (parseInt(a.registro) || 0) - (parseInt(b.registro) || 0);
+            });
+            if (currentFilter) {
+                var term = currentFilter.toLowerCase();
+                filtered = jsonData.filter(function(r) {
+                    return (r.nombre || '').toLowerCase().indexOf(term) !== -1 ||
+                           (r.cedula || '').toLowerCase().indexOf(term) !== -1 ||
+                           (r.direccion || '').toLowerCase().indexOf(term) !== -1 ||
+                           (r.telefono || '').toLowerCase().indexOf(term) !== -1 ||
+                           (r.fecha_afiliacion || '').toLowerCase().indexOf(term) !== -1 ||
+                           (r.registro || '').toLowerCase().indexOf(term) !== -1 ||
+                           (r.folio || '').toLowerCase().indexOf(term) !== -1 ||
+                           (r.renglon || '').toLowerCase().indexOf(term) !== -1;
+                });
+            }
+            filtered.forEach(function(item, idx) {
+                var tr = document.createElement('tr');
+                var realIdx = jsonData.indexOf(item);
+                tr.setAttribute('data-index', realIdx);
+
+                columns.forEach(function(col) {
+                    var td = document.createElement('td');
+                    td.setAttribute('data-field', col.key);
+                    td.setAttribute('data-index', realIdx);
+                    td.title = item[col.key] || '';
+
+                    if (col.key === 'cedula') {
+                        td.textContent = formatearCedula(item[col.key]);
+                    } else {
+                        td.textContent = item[col.key] || '';
+                    }
+
+                    if (col.hidden) {
+                        td.classList.add(col.key === 'firma' ? 'columna-firma-oculta' : 'columna-oculta');
+                    }
+                    if (col.key === 'nombre') td.classList.add('col-nombre');
+                    if (col.key === 'cedula') td.classList.add('col-cedula');
+                    if (col.key === 'direccion') td.classList.add('col-direccion');
+                    if (col.key === 'fecha_afiliacion') td.classList.add('col-fecha');
+                    if (col.key === 'registro') td.classList.add('col-registro');
+                    if (col.key === 'folio') td.classList.add('col-folio');
+                    if (col.key === 'renglon') td.classList.add('col-renglon');
+
+                    td.addEventListener('click', function() {
+                        iniciarEdicion(td);
+                    });
+
+                    tr.appendChild(td);
+                });
+
+                tbody.appendChild(tr);
+            });
+            actualizarBadges();
+        }
+
+        // Inline edit
+        function iniciarEdicion(td) {
+            if (td.querySelector('input')) return;
+            var field = td.getAttribute('data-field');
+            var idx = parseInt(td.getAttribute('data-index'));
+            if (!modoModificar && (field === 'id' || field === 'registro' || field === 'folio' || field === 'renglon')) return;
+
+            editIndex = idx;
+            editField = field;
+
+            var valor = jsonData[idx][field] || '';
+            td.innerHTML = '';
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.value = valor;
+            input.style.textTransform = 'uppercase';
+            td.appendChild(input);
+            input.focus();
+            input.select();
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    cancelarEdicion(td, valor, field);
+                } else if (e.key === 'Tab') {
+                    e.preventDefault();
+                    guardarEdicion(td, input, idx, field);
+                    var nextTd = e.shiftKey ? findPrevCell(td) : findNextCell(td);
+                    if (nextTd) iniciarEdicion(nextTd);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    guardarEdicion(td, input, idx, field);
+                    var nextRow = findNextRowCell(td);
+                    if (nextRow) iniciarEdicion(nextRow);
+                }
+            });
+
+            input.addEventListener('blur', function() {
+                setTimeout(function() {
+                    if (td.querySelector('input')) {
+                        guardarEdicion(td, input, idx, field);
+                    }
+                }, 100);
+            });
+        }
+
+        function cancelarEdicion(td, originalValue, field) {
+            td.innerHTML = '';
+            if (field === 'cedula') {
+                td.textContent = formatearCedula(originalValue);
+            } else {
+                td.textContent = originalValue || '';
+            }
+            td.title = originalValue || '';
+            editIndex = -1;
+            editField = '';
+        }
+
+        function guardarEdicion(td, input, idx, field) {
+            var nuevoValor = input.value.toUpperCase();
+            jsonData[idx][field] = nuevoValor;
+            td.innerHTML = '';
+            if (field === 'cedula') {
+                td.textContent = formatearCedula(nuevoValor);
+            } else {
+                td.textContent = nuevoValor;
+            }
+            td.title = nuevoValor;
+            editIndex = -1;
+            editField = '';
+            hasChanges = true;
+            statusEdicion.textContent = 'Cambios sin guardar';
+            actualizarBadges();
+            actualizarBotonGuardar();
+        }
+
+        function findNextCell(td) {
+            var row = td.parentElement;
+            var cells = Array.from(row.querySelectorAll('td'));
+            var ci = cells.indexOf(td);
+            if (ci < cells.length - 1) return cells[ci + 1];
+            var nextRow = row.nextElementSibling;
+            if (nextRow) {
+                var first = nextRow.querySelector('td[data-field]');
+                return first;
+            }
+            return null;
+        }
+
+        function findPrevCell(td) {
+            var row = td.parentElement;
+            var cells = Array.from(row.querySelectorAll('td'));
+            var ci = cells.indexOf(td);
+            if (ci > 0) return cells[ci - 1];
+            var prevRow = row.previousElementSibling;
+            if (prevRow) {
+                var prevCells = prevRow.querySelectorAll('td[data-field]');
+                return prevCells[prevCells.length - 1];
+            }
+            return null;
+        }
+
+        function findNextRowCell(td) {
+            var row = td.parentElement;
+            var field = td.getAttribute('data-field');
+            var nextRow = row.nextElementSibling;
+            if (nextRow) {
+                return nextRow.querySelector('td[data-field="' + field + '"]');
+            }
+            return null;
+        }
+
+        // Auto save
+        async function autoGuardarLocal() {
+            try {
+                statusEdicion.textContent = 'Guardando en Firestore...';
+                var dataAGuardar = prepararParaGuardar(jsonData);
+
+                // Guardar en Firestore
+                var db = firebase.firestore();
+                await db.collection('afiliados').doc('data').set({
+                    afiliados: dataAGuardar,
+                    ultima_actualizacion: new Date().toISOString()
+                });
+
+                // Tambien guardar local
+                if (window.electronAPI && window.electronAPI.writeDataFileSync) {
+                    window.electronAPI.writeDataFileSync('afiliados.json', dataAGuardar);
+                } else if (window.electronAPI && window.electronAPI.writeDataFile) {
+                    await window.electronAPI.writeDataFile('afiliados.json', dataAGuardar);
+                }
+
+                statusEdicion.textContent = 'Guardado Firestore ✓';
+                hasChanges = false;
+                actualizarBotonGuardar();
+                setTimeout(function() { statusEdicion.textContent = 'Sin cambios'; }, 3000);
+            } catch(e) {
+                console.log('Error guardar:', e);
+                statusEdicion.textContent = 'Error al guardar: ' + e.message;
+            }
+            ocultarGuardando();
+        }
+
+        // Guardar automaticamente al cerrar la ventana
+        window.addEventListener('beforeunload', function(e) {
+            if (hasChanges) {
+                try {
+                    if (window.electronAPI && window.electronAPI.writeDataFileSync) {
+                        window.electronAPI.writeDataFileSync('afiliados.json', prepararParaGuardar(jsonData));
+                    }
+                } catch(ex) { console.log('Error save beforeunload:', ex); }
+                e.preventDefault();
+                e.returnValue = 'Tiene cambios sin guardar. ¿Desea salir?';
+                return e.returnValue;
+            }
+        });
+
+        // Guardado local automatico cada 60 segundos (solo local, no nube)
+        setInterval(function() {
+            if (hasChanges && window.electronAPI && window.electronAPI.writeDataFileSync) {
+                window.electronAPI.writeDataFileSync('afiliados.json', prepararParaGuardar(jsonData));
+                statusEdicion.textContent = 'Guardado local automatico ✓';
+                setTimeout(function() { statusEdicion.textContent = hasChanges ? 'Cambios sin guardar' : 'Sin cambios'; }, 2000);
+            }
+        }, 60 * 1000);
+
+
+
+        function normalizarRegistro(r) {
+            return {
+                id: r.id || '', nombre: r.nombre || '', cedula: r.cedula ? String(r.cedula) : '',
+                fecha_afiliacion: r.fecha_afiliacion || r.fecha || '',
+                registro: r.registro ? r.registro.toString() : '', folio: r.folio ? r.folio.toString() : '',
+                renglon: r.renglon ? r.renglon.toString() : '', direccion: r.direccion || '',
+                telefono: r.telefono || r.celular || '', pagos: r.pagos || '', firma: r.firma || ''
+            };
+        }
+
+
+        async function cargarDatos() {
+            statusEdicion.textContent = 'Cargando datos desde Firestore...';
+            try {
+                var db = firebase.firestore();
+                var doc = await db.collection('afiliados').doc('data').get();
+                if (doc.exists) {
+                    var datos = doc.data().afiliados || [];
+                    jsonData = datos.map(normalizarRegistro).filter(function(r) { return r !== null; });
+                } else {
+                    jsonData = [];
+                }
+            } catch(e) {
+                console.error('Error Firestore:', e);
+                statusEdicion.textContent = 'Error Firestore: ' + e.message;
+                jsonData = [];
+            }
+
+            if (jsonData.length > 0) {
+                statusEdicion.textContent = 'Firestore (' + jsonData.length + ')';
+            } else {
+                statusEdicion.textContent = 'Sin datos';
+            }
+
+            setTimeout(function() { statusEdicion.textContent = 'Sin cambios'; }, 4000);
+            statusArchivo.textContent = 'Firestore (' + jsonData.length + ' registros)';
+            crearTabla();
+        }
+
+        // Search
+        searchInput.addEventListener('input', function() {
+            currentFilter = searchInput.value.trim();
+            crearTabla();
+        });
+        btnLimpiar.addEventListener('click', function() {
+            searchInput.value = '';
+            currentFilter = '';
+            crearTabla();
+        });
+
+        // Navigation - BLOCK if hasChanges
+        btnVolver.addEventListener('click', function(e) {
+            if (hasChanges) {
+                e.preventDefault();
+                e.stopPropagation();
+                mostrarModalGuardar('panel_new.html');
+                return false;
+            }
+        });
+
+        // Sidebar navigation - BLOCK if hasChanges
+        document.querySelectorAll('.nav-item').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                if (hasChanges) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    mostrarModalGuardar(item.href);
+                    return false;
+                }
+            });
+        });
+
+        var destinoPendiente = '';
+        function mostrarModalGuardar(destino) {
+            destinoPendiente = destino;
+            document.getElementById('modalGuardar').classList.add('active');
+        }
+        function ocultarModalGuardar() {
+            document.getElementById('modalGuardar').classList.remove('active');
+            destinoPendiente = '';
+        }
+        document.getElementById('btnModalGuardar').addEventListener('click', async function() {
+            document.getElementById('btnModalGuardar').disabled = true;
+            document.getElementById('btnModalGuardar').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            try {
+                if (window.electronAPI && window.electronAPI.writeDataFileSync) {
+                    window.electronAPI.writeDataFileSync('afiliados.json', jsonData);
+                }
+                hasChanges = false;
+                actualizarBotonGuardar();
+                ocultarModalGuardar();
+                if (destinoPendiente) window.location.href = destinoPendiente;
+            } catch(ex) {
+                alert('Error al guardar: ' + ex.message);
+            }
+            document.getElementById('btnModalGuardar').disabled = false;
+            document.getElementById('btnModalGuardar').innerHTML = '<i class="fas fa-save"></i> Guardar y continuar';
+        });
+        document.getElementById('btnModalCancelar').addEventListener('click', function() {
+            ocultarModalGuardar();
+        });
+
+        function showGuardarMensaje() {
+            var existing = document.getElementById('guardarOverlay');
+            if (existing) existing.remove();
+            var overlay = document.createElement('div');
+            overlay.id = 'guardarOverlay';
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;';
+            overlay.innerHTML = '<div style="background:#1a1a2e;border:1px solid #333;border-radius:12px;padding:30px 40px;text-align:center;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">' +
+                '<div style="width:50px;height:50px;border:3px solid #667eea;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;"></div>' +
+                '<p style="color:#fff;font-size:1rem;font-weight:600;margin:0 0 6px;">Guardando registros...</p>' +
+                '<p style="color:#aaa;font-size:0.8rem;margin:0;">Guardando en local y nube. No cierre esta ventana.</p>' +
+                '</div>';
+            document.body.appendChild(overlay);
+        }
+
+        function ocultarGuardando() {
+            var overlay = document.getElementById('guardarOverlay');
+            if (overlay) overlay.remove();
+        }
+
+        // ========== CALCULO CONSECUTIVO ==========
+
+        function calcularFolioRenglon(registro) {
+            var folio = 2 + (2 * Math.floor((registro - 1) / 36));
+            var renglon = ((registro - 1) % 36) + 1;
+            return { folio: folio, renglon: renglon };
+        }
+
+        function calcularCamposAutomaticos() {
+            var maxRegistro = 0;
+            var lastFolio = 2;
+            var lastRenglon = 0;
+            if (jsonData.length > 0) {
+                var registros = jsonData.map(function(a) { return parseInt(a.registro) || 0; }).filter(function(r) { return r > 0; });
+                if (registros.length > 0) {
+                    maxRegistro = Math.max.apply(null, registros);
+                }
+                var lastRecord = jsonData[jsonData.length - 1];
+                lastFolio = parseInt(lastRecord.folio) || 2;
+                lastRenglon = parseInt(lastRecord.renglon) || 0;
+            }
+            var registro = maxRegistro + 1;
+            var renglon = lastRenglon + 1;
+            var folio = lastFolio;
+            if (renglon > 36) {
+                renglon = 1;
+                folio = lastFolio + 2;
+            }
+            return { registro: registro, folio: folio, renglon: renglon };
+        }
+
+        // New record
+        btnNuevo.addEventListener('click', function() {
+            var newId = jsonData.length > 0 ? (parseInt(jsonData[jsonData.length - 1].id) + 1).toString() : '1';
+            var auto = calcularCamposAutomaticos();
+            var newRecord = {
+                id: newId,
+                nombre: '',
+                cedula: '',
+                fecha_afiliacion: '',
+                registro: auto.registro.toString(),
+                folio: auto.folio.toString(),
+                renglon: auto.renglon.toString(),
+                direccion: 'MANZANA  CASA',
+                telefono: '',
+                pagos: '',
+                firma: ''
+            };
+            jsonData.push(newRecord);
+            hasChanges = true;
+            actualizarBotonGuardar();
+            statusEdicion.textContent = 'Cambios sin guardar';
+            crearTabla();
+
+            // Scroll to last and edit name
+            var lastRow = tbody.lastElementChild;
+            if (lastRow) {
+                lastRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                var nameCell = lastRow.querySelector('td[data-field="nombre"]');
+                if (nameCell) setTimeout(function() { iniciarEdicion(nameCell); }, 300);
+            }
+        });
+
+        function confirmarEdicionPendiente() {
+            var inputActivo = document.querySelector('#tablaAfiliaciones td input');
+            if (inputActivo) {
+                var td = inputActivo.parentElement;
+                var idx = parseInt(td.getAttribute('data-index'));
+                var field = td.getAttribute('data-field');
+                if (!isNaN(idx) && field && (modoModificar || (field !== 'id' && field !== 'registro' && field !== 'folio' && field !== 'renglon'))) {
+                    guardarEdicion(td, inputActivo, idx, field);
+                }
+            }
+        }
+
+        // GUARDAR - Local + Firestore
+        btnGuardar.addEventListener('click', async function() {
+            try { confirmarEdicionPendiente(); } catch(e) { console.log('err pend:', e); }
+            statusEdicion.textContent = 'Guardando...';
+            try {
+                var ts = new Date().toISOString();
+                var dataConTs = [{ _lastModified: ts }].concat(jsonData);
+                if (window.electronAPI && window.electronAPI.writeDataFileSync) {
+                    var r = window.electronAPI.writeDataFileSync('afiliados.json', dataConTs);
+                    console.log('Guardado local:', r);
+                } else if (window.electronAPI && window.electronAPI.writeDataFile) {
+                    await window.electronAPI.writeDataFile('afiliados.json', dataConTs);
+                }
+                statusEdicion.textContent = 'Guardado local ✓';
+                hasChanges = false;
+                actualizarBotonGuardar();
+                try {
+                    if (typeof DataService !== 'undefined' && DataService.guardarAfiliadosEnFirestore) {
+                        await DataService.guardarAfiliadosEnFirestore(jsonData);
+                        statusEdicion.textContent = 'Guardado local + nube ✓';
+                    }
+                } catch(fsErr) {
+                    console.error('Error Firestore:', fsErr);
+                    statusEdicion.textContent = 'Guardado local ✓ (nube: error)';
+                }
+            } catch(ex) {
+                console.error('Error guardar:', ex);
+                statusEdicion.textContent = 'Error: ' + ex.message;
+            }
+            setTimeout(function() { statusEdicion.textContent = hasChanges ? 'Cambios sin guardar' : 'Sin cambios'; }, 3000);
+        });
+
+        // File load
+        btnJSONLoad.addEventListener('click', function() { fileInput.click(); });
+        fileInput.addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    var data = JSON.parse(ev.target.result);
+                    if (Array.isArray(data)) {
+                        jsonData = data.map(function(r) {
+                            return {
+                                id: r.id || '',
+                                nombre: r.nombre || '',
+                                cedula: r.cedula || '',
+                                fecha_afiliacion: r.fecha_afiliacion || r.fecha || '',
+                                registro: r.registro ? r.registro.toString() : '',
+                                folio: r.folio ? r.folio.toString() : '',
+                                renglon: r.renglon ? r.renglon.toString() : '',
+                                direccion: r.direccion || '',
+                                telefono: r.telefono || r.celular || '',
+                                pagos: r.pagos || '',
+                                firma: r.firma || ''
+                            };
+                        });
+                        hasChanges = true;
+                        actualizarBotonGuardar();
+                        crearTabla();
+                        statusEdicion.textContent = 'Cambios sin guardar';
+                        statusArchivo.textContent = 'Archivo: ' + file.name + ' (' + jsonData.length + ' registros)';
+                    }
+                } catch (err) {
+                    alert('Error al leer el archivo JSON: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            fileInput.value = '';
+        });
+
+        // Download
+        btnDescargar.addEventListener('click', function() {
+            var blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'afiliaciones.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Scroll to last
+        btnUltimo.addEventListener('click', function() {
+            var lastRow = tbody.lastElementChild;
+            if (lastRow) lastRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+
+        var selectedRowIdx = -1;
+        var modoModificar = false;
+
+        tbody.addEventListener('click', function(e) {
+            var tr = e.target.closest('tr');
+            if (!tr || e.target.closest('input')) return;
+            var prev = tbody.querySelector('tr.selected');
+            if (prev) prev.classList.remove('selected');
+            tr.classList.add('selected');
+            selectedRowIdx = parseInt(tr.getAttribute('data-index'));
+        });
+
+        btnEliminar.addEventListener('click', function() {
+            if (selectedRowIdx < 0 || selectedRowIdx >= jsonData.length) {
+                Toast.warning('Sin seleccion', 'Haga clic en una fila primero');
+                return;
+            }
+            var persona = jsonData[selectedRowIdx];
+            var nombre = persona.nombre || '(sin nombre)';
+            var registro = persona.registro || '';
+            if (!confirm('Eliminar registro #' + registro + ' - ' + nombre + '?')) return;
+            jsonData.splice(selectedRowIdx, 1);
+            selectedRowIdx = -1;
+            hasChanges = true;
+            crearTabla();
+            actualizarBotonGuardar();
+            statusEdicion.textContent = 'Registro eliminado - Presione GUARDAR';
+            Toast.warning('Registro eliminado', 'Presione GUARDAR para confirmar');
+        });
+
+        btnModificar.addEventListener('click', function() {
+            modoModificar = !modoModificar;
+            if (modoModificar) {
+                btnModificar.style.background = '#fff';
+                btnModificar.style.color = '#6f42c1';
+                btnModificar.style.borderColor = '#6f42c1';
+                btnModificar.innerHTML = '<i class="fas fa-lock"></i> Bloquear';
+                Toast.info('Modo Modificar', 'Ahora puede editar ID, Registro, Folio y Renglon');
+            } else {
+                btnModificar.style.background = '#6f42c1';
+                btnModificar.style.color = '#fff';
+                btnModificar.style.borderColor = '#6f42c1';
+                btnModificar.innerHTML = '<i class="fas fa-lock-open"></i> Modificar';
+                Toast.info('Modo Normal', 'Campos protegidos');
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'f') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+        });
+
+        // Arrow key navigation on table
+        tbody.addEventListener('keydown', function(e) {
+            if (e.target.tagName === 'INPUT') return;
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(e.key) === -1) return;
+            e.preventDefault();
+            var focused = document.activeElement;
+            if (!focused || !focused.hasAttribute('data-field')) return;
+            var row = focused.parentElement;
+            var field = focused.getAttribute('data-field');
+            var nextTd = null;
+
+            if (e.key === 'ArrowRight') {
+                nextTd = findNextCell(focused);
+            } else if (e.key === 'ArrowLeft') {
+                nextTd = findPrevCell(focused);
+            } else if (e.key === 'ArrowDown') {
+                nextTd = findNextRowCell(focused);
+            } else if (e.key === 'ArrowUp') {
+                var prevRow = row.previousElementSibling;
+                if (prevRow) nextTd = prevRow.querySelector('td[data-field="' + field + '"]');
+            }
+            if (nextTd) {
+                nextTd.tabIndex = 0;
+                nextTd.focus();
+            }
+        });
+
+        // ============ PDF EXPORT ============
+        var pdfColumnConfig = columns.filter(function(c) { return !c.hidden; }).map(function(c) {
+            return { key: c.key, label: c.label, active: c.active, pdfWidth: c.pdfWidth, align: c.align };
+        });
+
+        function renderPdfColumnTable() {
+            pdfColumnBody.innerHTML = '';
+            pdfColumnConfig.forEach(function(col, i) {
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td><input type="checkbox" ' + (col.active ? 'checked' : '') + ' data-ci="' + i + '" class="col-active-cb"></td>' +
+                    '<td>' + col.label + '</td>' +
+                    '<td><input type="number" value="' + col.pdfWidth + '" min="5" max="100" data-ci="' + i + '" class="col-width-input"></td>' +
+                    '<td><select data-ci="' + i + '" class="col-align-select">' +
+                        '<option value="left"' + (col.align === 'left' ? ' selected' : '') + '>Izquierda</option>' +
+                        '<option value="center"' + (col.align === 'center' ? ' selected' : '') + '>Centro</option>' +
+                        '<option value="right"' + (col.align === 'right' ? ' selected' : '') + '>Derecha</option>' +
+                    '</select></td>';
+                pdfColumnBody.appendChild(tr);
+            });
+
+            // Custom columns
+            customColumns.forEach(function(cc, i) {
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td><input type="checkbox" ' + (cc.active ? 'checked' : '') + ' data-cci="' + i + '" class="cc-active-cb"></td>' +
+                    '<td><input type="text" value="' + (cc.label || '') + '" data-cci="' + i + '" class="cc-label-input" style="width:120px"></td>' +
+                    '<td><input type="number" value="' + (cc.pdfWidth || 20) + '" min="5" max="100" data-cci="' + i + '" class="cc-width-input"></td>' +
+                    '<td><select data-cci="' + i + '" class="cc-align-select">' +
+                        '<option value="left"' + (cc.align === 'left' ? ' selected' : '') + '>Izquierda</option>' +
+                        '<option value="center"' + (cc.align === 'center' ? ' selected' : '') + '>Centro</option>' +
+                        '<option value="right"' + (cc.align === 'right' ? ' selected' : '') + '>Derecha</option>' +
+                    '</select></td>';
+                pdfColumnBody.appendChild(tr);
+            });
+        }
+
+        pdfColumnBody.addEventListener('change', function(e) {
+            var t = e.target;
+            if (t.classList.contains('col-active-cb')) {
+                pdfColumnConfig[parseInt(t.getAttribute('data-ci'))].active = t.checked;
+            } else if (t.classList.contains('col-width-input')) {
+                pdfColumnConfig[parseInt(t.getAttribute('data-ci'))].pdfWidth = parseFloat(t.value) || 20;
+            } else if (t.classList.contains('col-align-select')) {
+                pdfColumnConfig[parseInt(t.getAttribute('data-ci'))].align = t.value;
+            } else if (t.classList.contains('cc-active-cb')) {
+                customColumns[parseInt(t.getAttribute('data-ci'))].active = t.checked;
+            } else if (t.classList.contains('cc-label-input')) {
+                customColumns[parseInt(t.getAttribute('data-ci'))].label = t.value;
+            } else if (t.classList.contains('cc-width-input')) {
+                customColumns[parseInt(t.getAttribute('data-ci'))].pdfWidth = parseFloat(t.value) || 20;
+            } else if (t.classList.contains('cc-align-select')) {
+                customColumns[parseInt(t.getAttribute('data-ci'))].align = t.value;
+            }
+        });
+
+        btnAddColumn.addEventListener('click', function() {
+            customColumns.push({ key: 'custom_' + customColumns.length, label: 'NUEVA', pdfWidth: 20, align: 'left', active: true, customValue: '' });
+            renderPdfColumnTable();
+        });
+
+        btnPDF.addEventListener('click', function() {
+            renderPdfColumnTable();
+            modalPDF.classList.add('active');
+        });
+        modalClosePDF.addEventListener('click', function() { modalPDF.classList.remove('active'); });
+        btnCancelPDF.addEventListener('click', function() { modalPDF.classList.remove('active'); });
+        modalPDF.addEventListener('click', function(e) {
+            if (e.target === modalPDF) modalPDF.classList.remove('active');
+        });
+
+        btnExportPDF.addEventListener('click', function() {
+            exportarPDF();
+            modalPDF.classList.remove('active');
+        });
+
+        function exportarPDF() {
+            var jsPDF = window.jspdf ? window.jspdf.jsPDF : null;
+            if (!jsPDF) {
+                alert('jsPDF no esta cargado. Verifique que los archivos lib/jspdf.umd.min.js y lib/jspdf.plugin.autotable.min.js existan.');
+                return;
+            }
+
+            var orientation = document.getElementById('pdfOrientation').value;
+            var pageSize = document.getElementById('pdfSize').value;
+            var margin = parseInt(document.getElementById('pdfMargin').value) || 10;
+            var titleColor = document.getElementById('pdfTitleColor').value;
+            var headerColor = document.getElementById('pdfHeaderColor').value;
+            var headerBg = document.getElementById('pdfHeaderBg').value;
+            var titleFont = document.getElementById('pdfTitleFont').value;
+            var titleSize = parseInt(document.getElementById('pdfTitleSize').value) || 14;
+
+            var title1 = document.getElementById('pdfTitle1').value;
+            var title2 = document.getElementById('pdfTitle2').value;
+            var title3 = document.getElementById('pdfTitle3').value;
+            var title4 = document.getElementById('pdfTitle4').value;
+            var title5 = document.getElementById('pdfTitle5').value;
+
+            // Replace {{fecha}}
+            var today = new Date();
+            var fechaStr = today.toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+            title5 = title5.replace('{{fecha}}', fechaStr);
+
+            // Sort data
+            var sortField = document.getElementById('pdfSortField').value;
+            var sortDir = document.getElementById('pdfSortDir').value;
+            var sortedData = jsonData.slice();
+            if (sortField !== 'ninguno') {
+                sortedData.sort(function(a, b) {
+                    var va = (a[sortField] || '').toString().toLowerCase();
+                    var vb = (b[sortField] || '').toString().toLowerCase();
+                    if (sortDir === 'asc') return va.localeCompare(vb, 'es');
+                    return vb.localeCompare(va, 'es');
+                });
+            }
+
+            // Build columns
+            var activeCols = pdfColumnConfig.filter(function(c) { return c.active; });
+            activeCols.forEach(function(c) {
+                c._source = 'data';
+            });
+            customColumns.forEach(function(cc) {
+                if (cc.active) {
+                    activeCols.push({ key: cc.key, label: cc.label, pdfWidth: cc.pdfWidth, align: cc.align, _source: 'custom', customValue: cc.customValue || '' });
+                }
+            });
+
+            var doc = new jsPDF({ orientation: orientation, unit: 'mm', format: pageSize });
+            var pageWidth = doc.internal.pageSize.getWidth();
+            var pageHeight = doc.internal.pageSize.getHeight();
+
+            // Header
+            var yPos = margin;
+            doc.setFont(titleFont, 'bold');
+            doc.setFontSize(titleSize);
+            doc.setTextColor(titleColor);
+            doc.text(title1, pageWidth / 2, yPos, { align: 'center' });
+            yPos += titleSize * 0.5;
+
+            doc.setFontSize(titleSize - 2);
+            doc.text(title2, pageWidth / 2, yPos, { align: 'center' });
+            yPos += (titleSize - 2) * 0.5;
+
+            if (title3) {
+                doc.setFontSize(titleSize - 4);
+                doc.text(title3, pageWidth / 2, yPos, { align: 'center' });
+                yPos += (titleSize - 4) * 0.5;
+            }
+            if (title4) {
+                doc.setFontSize(titleSize - 4);
+                doc.text(title4, pageWidth / 2, yPos, { align: 'center' });
+                yPos += (titleSize - 4) * 0.5;
+            }
+            if (title5) {
+                doc.setFontSize(titleSize - 4);
+                doc.text(title5, pageWidth / 2, yPos, { align: 'center' });
+                yPos += (titleSize - 4) * 0.5;
+            }
+
+            yPos += 4;
+
+            // Table headers
+            var headers = activeCols.map(function(c) { return c.label; });
+            var tableData = sortedData.map(function(row) {
+                return activeCols.map(function(c) {
+                    if (c._source === 'custom') return c.customValue;
+                    var val = row[c.key] || '';
+                    if (c.key === 'cedula') val = formatearCedula(val);
+                    return val;
+                });
+            });
+
+            var colStyles = {};
+            activeCols.forEach(function(c, i) {
+                colStyles[i] = { halign: c.align || 'left', cellWidth: c.pdfWidth };
+            });
+
+            doc.autoTable({
+                startY: yPos,
+                head: [headers],
+                body: tableData,
+                margin: { left: margin, right: margin, top: margin, bottom: margin },
+                styles: {
+                    fontSize: 8,
+                    cellPadding: 2,
+                    overflow: 'linebreak',
+                    font: titleFont
+                },
+                headStyles: {
+                    fillColor: headerBg,
+                    textColor: headerColor,
+                    fontStyle: 'bold',
+                    fontSize: 8
+                },
+                alternateRowStyles: {
+                    fillColor: [245, 245, 245]
+                },
+                columnStyles: colStyles,
+                didDrawPage: function(data) {
+                    // Footer
+                    doc.setFontSize(7);
+                    doc.setTextColor(128);
+                    doc.text(
+                        'Pagina ' + doc.internal.getNumberOfPages(),
+                        pageWidth - margin,
+                        pageHeight - 5,
+                        { align: 'right' }
+                    );
+                }
+            });
+
+            doc.save('afiliaciones.pdf');
+        }
+
+        // Init
+        cargarDatos();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('sidebarToggle').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('collapsed');
+            });
+        });
+    })();
+    </script>
+    </main>
+    </div>
+</body>
+</html>
+
+

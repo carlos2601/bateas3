@@ -1,0 +1,806 @@
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formato de Verificación de Residencia - JAC Barrio Bateas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        .page {
+            width: 21.6cm;
+            height: 27.9cm;
+            background: white;
+            padding: 1.2cm 1.5cm;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+            margin-bottom: 15px;
+            page-break-after: always;
+        }
+
+        .page:last-child {
+            page-break-after: auto;
+        }
+
+        .page-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('logo4.jpg');
+            background-size: contain;
+            background-position: center -0.7cm;
+            background-repeat: no-repeat;
+            opacity: 0.15;
+            z-index: 0;
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 0.6cm;
+            right: 1.5cm;
+            font-size: 10pt;
+            font-weight: bold;
+            color: #000;
+            z-index: 2;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 0.2cm;
+            padding-bottom: 0.2cm;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-size: 14pt;
+            color: #2c3e50;
+            margin-bottom: 0.1cm;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        h2 {
+            font-size: 12pt;
+            color: #5a6a7a;
+            font-weight: 600;
+            margin-bottom: 0.1cm;
+        }
+
+        .document-title {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-top: 0.2cm;
+            text-decoration: underline;
+        }
+
+        .content {
+            font-size: 10pt;
+            position: relative;
+            z-index: 1;
+            line-height: 1.1;
+        }
+
+        .section {
+            margin-bottom: 0.3cm;
+            padding: 0.2cm;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background: white;
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 0.15cm;
+            font-size: 11pt;
+            color: #2c3e50;
+            border-bottom: 1px solid #FFD700;
+            padding-bottom: 0.1cm;
+        }
+
+        .form-row {
+            display: flex;
+            margin-bottom: 0.12cm;
+            align-items: flex-start;
+        }
+
+        .form-label {
+            width: 4cm;
+            font-weight: 500;
+            font-size: 9.5pt;
+            padding-top: 0.1cm;
+        }
+
+        .form-input {
+            flex: 1;
+            border: none;
+            border-bottom: 1px solid #141313ba;
+            padding: 0.1cm 0;
+            background: transparent;
+            font-size: 9pt;
+        }
+
+        .form-textarea {
+            flex: 1;
+            border: 1px solid #ddd;
+            padding: 0.2cm;
+            height: 1.6cm;
+            resize: vertical;
+            background: white;
+            font-size: 9pt;
+            line-height: 1.1;
+        }
+
+        .signature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.4cm;
+            margin-top: 0.4cm;
+        }
+
+        .signature-box {
+            text-align: center;
+            padding: 0.3cm;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            background: white;
+            min-height: 5cm;
+            /* Aumenté de 3.2cm a 5cm */
+        }
+
+        .signature-title {
+            font-weight: bold;
+            font-size: 10pt;
+            margin-bottom: 0.2cm;
+            color: #2c3e50;
+        }
+
+        .signature-text {
+            font-size: 8.5pt;
+            margin: 0.15cm 0;
+            line-height: 1.2;
+            min-height: 1.5cm;
+            /* Aumenté de 0.8cm a 1.5cm */
+        }
+
+        .signature-line {
+            border-top: 1px solid #2c3e50;
+            margin-top: 1cm;
+            /* Aumenté de 0.4cm a 1cm */
+            padding-top: 0.1cm;
+            font-size: 8.5pt;
+            font-weight: 500;
+        }
+
+        .signature-cc {
+            font-size: 7.5pt;
+            margin-top: 0.1cm;
+            color: #555;
+        }
+
+        .legal-notice {
+            margin: 0.2cm 0;
+            padding: 0.2cm;
+            border: 1px solid #e74c3c;
+            border-radius: 3px;
+            background: white;
+            font-size: 8pt;
+            line-height: 1.1;
+        }
+
+        .legal-notice h3 {
+            color: #e74c3c;
+            margin-bottom: 0.1cm;
+            font-size: 9pt;
+            text-align: center;
+        }
+
+        .verification-options {
+            display: flex;
+            justify-content: center;
+            gap: 1cm;
+            margin: 0.2cm 0;
+        }
+
+        .verification-option {
+            text-align: center;
+            font-size: 9pt;
+        }
+
+        .verification-option input[type="radio"] {
+            transform: scale(1);
+            margin-right: 0.1cm;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 0.2cm;
+            font-size: 7pt;
+            color: #5a6a7a;
+            padding-top: 0.5cm;
+            border-top: 1px solid #ddd;
+            line-height: 1;
+
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 0.4cm;
+            flex: 1;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            font-size: 9pt;
+        }
+
+        .radio-option input {
+            margin-right: 0.1cm;
+        }
+
+        .page-two .section { margin-bottom: 0.25cm; padding: 0.2cm; }
+        .page-two .form-row { margin-bottom: 0.12cm; }
+        .page-two .content { min-height: 22cm; font-family: Tahoma, Geneva, Verdana, sans-serif; }
+
+        @media print {
+            body {
+                background: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            .page {
+                box-shadow: none;
+                margin: 0;
+                width: 21.6cm;
+                height: 27.9cm;
+                padding: 1.2cm 1.5cm;
+                page-break-after: always;
+            }
+
+            .page:last-child {
+                page-break-after: auto;
+            }
+
+            .page-background {
+                opacity: 0.1;
+            }
+
+            .action-buttons {
+                display: none;
+            }
+
+            .page-number {
+                position: absolute;
+                bottom: 0.6cm;
+                right: 1.5cm;
+                font-size: 10pt;
+                font-weight: bold;
+                color: #000;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            @page {
+                size: letter;
+                margin: 0;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .page {
+                width: 100%;
+                padding: 0.8cm;
+                height: auto;
+            }
+
+            .signature-grid {
+                grid-template-columns: 1fr;
+                gap: 0.3cm;
+            }
+
+            .action-buttons,
+            .adjustment-panel {
+                width: 100%;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .panel-btn,
+            .print-btn,
+            .logout-btn {
+                width: 150px;
+            }
+
+            .adjustment-controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Página 1 -->
+    <div class="page">
+        <div class="page-number"><strong>Página 1 de 3</strong></div>
+        <div class="page-background"></div>
+
+        <div class="header">
+            <h1>JUNTA DE ACCIÓN COMUNAL</h1>
+            <h2>BARRIO BATEAS - SECTOR 3</h2>
+            <div class="document-title">FORMATO DE VERIFICACIÓN DE RESIDENCIA</div>
+        </div>
+
+        <div class="content">
+            <!-- Advertencia Legal Unificada -->
+            <div class="legal-notice">
+                <h3>⚠️ ADVERTENCIA LEGAL - CONSECUENCIAS POR FALSEDAD</h3>
+                <p><strong>Este documento tiene carácter de DECLARACIÓN JURADA.</strong> Cualquier falsedad en la
+                    información acarreará:</p>
+
+                <p><strong>⚖️ CONSECUENCIAS PENALES:</strong><br>
+                    • Falsedad en documento privado (Art. 269 C.P.) - Prisión de 16 a 72 meses<br>
+                    • Obtención de beneficios mediante engaño - Sanciones según Ley 1900/2018</p>
+
+                <p><strong>🏠 CONSECUENCIAS PARA PROPIETARIOS:</strong><br>
+                    • Pérdida permanente de afiliación para TODOS los residentes de la propiedad<br>
+                    • Inhabilitación definitiva para certificar futuros inquilinos<br>
+                    • Responsabilidad solidaria en perjuicios causados</p>
+
+                <p><strong>👥 CONSECUENCIAS PARA SOLICITANTES:</strong><br>
+                    • Nulidad inmediata del proceso de afiliación<br>
+                    • Inhabilitación permanente para futuras solicitudes<br>
+                    • Denuncia penal ante autoridades</p>
+
+                <p><strong>Todas las partes declaran conocer y aceptar estas consecuencias al firmar.</strong></p>
+            </div>
+
+            <!-- Información del Solicitante -->
+            <div class="section">
+                <div class="section-title">1. INFORMACIÓN DEL SOLICITANTE</div>
+
+                <div class="form-row">
+                    <div class="form-label">Nombre completo:</div>
+                    <input type="text" class="form-input">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.12cm;">
+                    <div class="form-row">
+                        <div class="form-label">Número de cédula:</div>
+                        <input type="text" class="form-input">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">Dirección de residencia:</div>
+                        <input type="text" class="form-input">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">Teléfono de contacto:</div>
+                        <input type="text" class="form-input">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">Correo electrónico:</div>
+                        <input type="email" class="form-input">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">Condición de residencia:</div>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="residencia"> Propietario
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="residencia"> Inquilino
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="residencia"> Familiar
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información del Dueño (si es inquilino) -->
+            <div class="section">
+                <div class="section-title">2. INFORMACIÓN DEL PROPIETARIO</div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.12cm;">
+                    <div class="form-row">
+                        <div class="form-label">Nombre del propietario:</div>
+                        <input type="text" class="form-input">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">Cédula del propietario:</div>
+                        <input type="text" class="form-input">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">Teléfono del propietario:</div>
+                        <input type="text" class="form-input">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">Dirección de residencia:</div>
+                        <input type="text" class="form-input">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Verificación con Vecinos -->
+            <div class="section">
+                <div class="section-title">3. VERIFICACIÓN CON VECINOS (OBLIGATORIA)</div>
+
+                <div class="form-row">
+                    <div class="form-label">Vecino 1 - Nombre:</div>
+                    <input type="text" class="form-input" placeholder="">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">Confirmación:</div>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="vecino1"> Confirma
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="vecino1"> No confirma
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="vecino1"> No disponible
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">Vecino 2 - Nombre:</div>
+                    <input type="text" class="form-input" placeholder="">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">Confirmación:</div>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="vecino2"> Confirma
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="vecino2"> No confirma
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="vecino2"> No disponible
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalles de la Visita (MOVIDA A LA PRIMERA PÁGINA) -->
+            <div class="section">
+                <div class="section-title">4. DETALLES DE LA VISITA</div>
+
+                <div class="form-row">
+                    <div class="form-label">Fecha de visita:</div>
+                    <input type="text" class="form-input">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">Hora de visita:</div>
+                    <input type="text" class="form-input">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">Persona contactada:</div>
+                    <input type="text" class="form-input">
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Junta de Acción Comunal Barrio Bateas - Sector 3 | Teléfono: 313 581 5787 | Correo:
+                juntacomunalbateassector3@gmail.com
+            </p>
+            <p>Puerto Gaitán, Meta | Documento oficial - Prohibida su reproducción no autorizada</p>
+        </div>
+    </div>
+
+    <!-- Página 2 -->
+    <div class="page page-two">
+        <div class="page-number"><strong>Página 2 de 3</strong></div>
+        <div class="page-background"></div>
+
+        <div class="content">
+            <!-- Observaciones y Documentos -->
+            <div class="section">
+                <div class="section-title">5. OBSERVACIONES Y DOCUMENTOS</div>
+
+                <div class="form-row">
+                    <div class="form-label">Documentos verificados:</div>
+                    <textarea class="form-textarea" placeholder="" style="height: 75px;"></textarea>
+                </div>
+            </div>
+
+            <!-- Verificación ORSO -->
+            <div class="section">
+                <div class="section-title">6. VERIFICACIÓN ORSO - GERENCIA DE ACCIÓN COMUNAL</div>
+
+                <p style="font-size: 8pt; margin-bottom: 0.15cm; color: #555;">
+                    <strong>Nota:</strong> El sistema ORSO verifica si el usuario se encuentra afiliado a otra Junta de
+                    Acción Comunal.
+                    Si el usuario aparece registrado en otro barrio, NO podrá ser afiliado hasta que sea dado de baja
+                    del sistema ORSO.
+                </p>
+
+                <p
+                    style="font-size: 8.5pt; margin-bottom: 0.15cm; padding: 0.1cm; background: #f0f8ff; border: 1px solid #3498db; border-radius: 3px;">
+                    <strong>🔗 Link de verificación ORSO:</strong>
+                    <a href="https://orso.meta.gov.co/orso/consultar_afiliado.php" target="_blank"
+                        style="color: #2980b9; font-weight: bold;">
+                        https://orso.meta.gov.co/orso/consultar_afiliado.php
+                    </a>
+                </p>
+
+                <div class="form-row">
+                    <div class="form-label">¿Se realizó la verificación?</div>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="verificacionORSO" value="si"> Sí
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="verificacionORSO" value="no"> No
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">Resultado:</div>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="resultadoORSO" value="disponible"> Disponible (No aparece en otro
+                            barrio)
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="resultadoORSO" value="afiliado"> Afiliado en otro barrio
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">Barrio donde aparece afiliado:</div>
+                    <input type="text" class="form-input" placeholder="">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.12cm;">
+                    <div class="form-row">
+                        <div class="form-label">Verificado por:</div>
+                        <input type="text" class="form-input">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">Fecha de verificación:</div>
+                        <input type="text" class="form-input">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conclusión de la Verificación -->
+            <div class="section">
+                <div class="section-title">7. CONCLUSIÓN DE LA VERIFICACIÓN</div>
+
+                <div class="verification-options">
+                    <div class="verification-option">
+                        <input type="radio" id="aprobado" name="conclusion">
+                        <label for="aprobado">APROBADO</label>
+                    </div>
+                    <div class="verification-option">
+                        <input type="radio" id="rechazado" name="conclusion">
+                        <label for="rechazado">RECHAZADO</label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">Motivo de rechazo:</div>
+                    <textarea class="form-textarea" placeholder="" style="height: 70px;"></textarea>
+                </div>
+            </div>
+
+            <!-- Información de la Conciliadora -->
+            <div class="section">
+                <div class="section-title">8. INFORMACIÓN DEL CONCILIADOR(A)</div>
+
+                <div class="form-row">
+                    <div class="form-label">Nombre del conciliador(a):</div>
+                    <input type="text" class="form-input">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.12cm;">
+                    <div class="form-row">
+                        <div class="form-label">Cédula de ciudadanía:</div>
+                        <input type="text" class="form-input">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">Número de registro JAC:</div>
+                        <input type="text" class="form-input">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Firmas -->
+            <div class="signature-grid">
+                <!-- Solicitante -->
+                <div class="signature-box">
+                    <div class="signature-title">SOLICITANTE</div>
+                    <div class="signature-text">Declaro bajo juramento que la información es veraz y conozco las
+                        sanciones por falsedad.</div>
+                    <div class="signature-line">Firma del solicitante</div>
+                    <div class="signature-cc">C.C. _________________________</div>
+                </div>
+
+                <!-- Propietario -->
+                <div class="signature-box">
+                    <div class="signature-title">PROPIETARIO</div>
+                    <div class="signature-text">Certifico bajo juramento que reside efectivamente en mi propiedad y
+                        conozco las consecuencias penales.</div>
+                    <div class="signature-line">Firma del propietario</div>
+                    <div class="signature-cc">C.C. _________________________</div>
+                </div>
+
+                <!-- Conciliadora -->
+                <div class="signature-box">
+                    <div class="signature-title">CONCILIADOR(A) JAC</div>
+                    <div class="signature-text">Certifico la verificación realizada y he informado sobre las
+                        consecuencias legales.</div>
+                    <div class="signature-line">Firma y sello</div>
+                    <div class="signature-cc">C.C. _________________________</div>
+                </div>
+            </div>
+        </div>
+
+
+
+
+
+        <div class="legal-notice">
+            <h3>✅ DECLARACIÓN FINAL DE CONFORMIDAD</h3>
+            <p style="font-size: 9pt;"><strong>Todas las partes declaran bajo juramento conocer y aceptar las sanciones
+                    por falsedad en la información proporcionada.</strong></p>
+        </div>
+        <br>
+        <div class="footer">
+            <p>Junta de Acción Comunal Barrio Bateas - Sector 3 | Teléfono: 313 581 5787 | Correo:
+                juntacomunalbateassector3@gmail.com
+            </p>
+            <p>Puerto Gaitán, Meta | Documento oficial - Prohibida su reproducción no autorizada</p>
+        </div>
+    </div>
+
+    <!-- Página 3 -->
+    <div class="page page-two">
+        <div class="page-number"><strong>Página 3 de 3</strong></div>
+        <div class="page-background"></div>
+
+        <div class="content" style="text-align: justify;">
+            <div class="header" style="margin-bottom: 0.3cm;">
+                <h1 style="font-size: 14pt;">DERECHOS Y DEBERES DEL AFILIADO</h1>
+                <h2 style="font-size: 11pt; font-weight: 400;">Ley 2166 de 2021 - Artículos 23 y 26</h2>
+            </div>
+
+            <!-- Derechos -->
+            <div style="margin-bottom: 0.3cm;">
+                <div class="section-title" style="text-align: center; padding: 0.1cm 0.2cm; font-size: 9.5pt;">DERECHOS
+                    DEL AFILIADO (Art. 23 Ley 2166 de 2021)</div>
+
+                <ol style="font-size: 9.5pt; margin: 0; padding-left: 0.5cm; line-height: 1.4;">
+                    <li><strong>Elegir y ser elegidos</strong> para desempeñar cargos dentro de los organismos comunales
+                        o en representación de estos.</li>
+                    <li><strong>Participar y opinar</strong> en las deliberaciones de la asamblea general y los órganos
+                        a los cuales pertenezca, y votar para tomar las decisiones correspondientes.</li>
+                    <li><strong>Ejercer control social</strong> sobre la gestión de la organización comunal mediante
+                        denuncias formales ante la Comisión de Convivencia y Conciliación o la Fiscalía, cuando existan
+                        indicios de irregularidades en la administración de recursos o el ejercicio de funciones.</li>
+                    <li><strong>Participar de los beneficios</strong> del organismo.</li>
+                    <li><strong>Participar en la elaboración</strong> del programa del organismo y exigir su
+                        cumplimiento.</li>
+                    <li><strong>Participar en la remoción</strong> de los dignatarios elegidos, respetando el debido
+                        proceso de conformidad con la Constitución, la Ley y los estatutos.</li>
+                    <li><strong>Conocer los informes</strong> de gestión que presenten las entidades de inspección,
+                        vigilancia y control sobre la gestión desarrollada, los gastos y recursos asignados.</li>
+                    <li><strong>Participar en la aprobación</strong> del Plan de Acción Comunal, programas y proyectos
+                        de la organización y exigir su cumplimiento.</li>
+                    <li><strong>Ser informados</strong> a través de campañas de socialización, medios de comunicación,
+                        redes sociales, sobre las actividades, proyectos y/o programas que se ejecuten.</li>
+                    <li><strong>Solicitar y obtener certificado de afiliación</strong> que acredite la calidad de
+                        afiliado ante la Junta de Acción Comunal.</li>
+                </ol>
+            </div>
+
+            <!-- Deberes -->
+            <div>
+                <div class="section-title" style="text-align: center; padding: 0.1cm 0.2cm; font-size: 9.5pt;">DEBERES
+                    DEL AFILIADO (Art. 26 Ley 2166 de 2021)</div>
+
+                <ol style="font-size: 9.5pt; margin: 0; padding-left: 0.5cm; line-height: 1.4;">
+                    <li><strong>Estar inscrito y participar activamente</strong> en los comités y comisiones de trabajo.
+                    </li>
+                    <li><strong>Conocer y cumplir</strong> los estatutos, reglamentos y decisiones de los organismos y
+                        las disposiciones legales que regulan la materia.</li>
+                    <li><strong>Asistir a las asambleas generales</strong>, participar en sus deliberaciones, votar con
+                        responsabilidad y trabajar activamente en la ejecución de los planes acordados. El afiliado que
+                        no asista a 2 de cada 3 asambleas podrá ser depurado del libro de afiliados por solicitud del
+                        Comité Conciliador, conforme al Art. 28 de la Ley 2166 de 2021.</li>
+                    <li><strong>Mantener actualizados sus datos</strong> personales y de contacto en el libro de
+                        afiliados o en el sistema electrónico.</li>
+                    <li><strong>Denunciar ante las autoridades competentes</strong> los actos, hechos y omisiones que
+                        atenten contra las normas legales y estatutarias y contra la organización comunal.</li>
+                    <li><strong>Presentar propuestas</strong> para contribuir a la solución de las necesidades y
+                        conflictos que surjan dentro del territorio.</li>
+                    <li><strong>Mantener un comportamiento de respeto</strong>, franca y sincera armonía, que propicie
+                        el crecimiento y convivencia en la organización.</li>
+                    <li><strong>Pagar las cuotas monetarias oportunamente</strong> de conformidad con lo establecido por
+                        la asamblea general y los estatutos de la organización.</li>
+                </ol>
+            </div>
+
+            <!-- Aceptación de Compromisos -->
+            <div style="margin-top: 0.5cm;">
+                <p style="font-size: 10pt; text-align: justify; margin-bottom: 0.4cm; line-height: 1.8;">
+                    Yo _______________________________________________________________________________________________,
+                    mayor de edad, identificado(a) con Cédula de Ciudadanía N° _________________________,
+                    DECLARO haber leído, entender y aceptar los DERECHOS y DEBERES del afiliado establecidos en la Ley
+                    2166 de 2021,
+                    comprometiéndome a cumplir con todas las obligaciones aquí descritas.
+                </p>
+
+                <div style="text-align: center; margin-top: 1.5cm;">
+                    <div style="border-top: 1px solid #2c3e50; display: inline-block; width: 6cm; padding-top: 0.1cm;">
+                        <strong style="font-size: 10pt;">Firma del Afiliado</strong>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 0.5cm;">
+                    <span style="font-size: 9pt; color: #555;">C.C. _________________________</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Junta de Acción Comunal Barrio Bateas - Sector 3 | Teléfono: 313 581 5787 | Correo:
+                juntacomunalbateassector3@gmail.com</p>
+            <p>Puerto Gaitán, Meta | Documento oficial - Prohibida su reproducción no autorizada</p>
+        </div>
+    </div>
+
+    <script>
+        // Verificar si el logo existe
+        document.addEventListener('DOMContentLoaded', function () {
+            const img = new Image();
+            img.src = 'logo4.jpg';
+            img.onerror = function () {
+                document.querySelectorAll('.page-background').forEach(bg => {
+                    bg.style.backgroundImage = 'none';
+                    bg.innerHTML = '<p style="color:red;text-align:center;margin-top:50%;font-size:8pt;">[Logo no encontrado]</p>';
+                });
+            };
+        });
+    </script>
+
+</body>
+
+</html>

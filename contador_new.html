@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Pagos - J.A.C BATEAS 3</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="lib/jspdf.umd.min.js"></script>
+    <script src="lib/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="styles/design-system.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);</script>
+    <style>
+        .filters-container {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            padding: var(--space-4);
+            margin-bottom: var(--space-4);
+        }
+        .filters-grid {
+            display: grid;
+            grid-template-columns: 3fr 1fr 1fr 1fr;
+            gap: var(--space-3);
+            align-items: end;
+        }
+        .filter-group { display: flex; flex-direction: column; gap: 4px; }
+        .filter-label { font-size: 0.7rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .filter-input {
+            padding: 8px 10px; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+            background: var(--bg-primary); color: var(--text-primary); font-size: 0.8rem; font-family: inherit;
+        }
+        .filter-input:focus { outline: none; border-color: var(--brand-primary); box-shadow: 0 0 0 2px rgba(139,195,74,0.2); }
+        .quick-btns { display: flex; gap: 4px; flex-wrap: nowrap; }
+        .btn-sm { padding: 6px 10px; font-size: 0.7rem; border: none; border-radius: var(--radius-md); cursor: pointer; font-weight: 500; font-family: inherit; }
+        .btn-secondary { background: var(--bg-tertiary); color: var(--text-secondary); }
+        .btn-secondary:hover { background: var(--bg-hover); }
+        .btn-primary { background: var(--brand-primary); color: white; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-danger { background: #f44336; color: white; }
+        .btn-danger:hover { opacity: 0.9; }
+        .results-container {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            padding: var(--space-4);
+        }
+        .results-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+        .results-title { font-size: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+        .stats { display: flex; gap: 12px; }
+        .stat-box {
+            background: var(--bg-tertiary); border-radius: var(--radius-md); padding: 8px 14px; text-align: center; min-width: 80px;
+        }
+        .stat-value { font-size: 1rem; font-weight: 700; color: var(--brand-primary); }
+        .stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; }
+        .table-controls { display: flex; align-items: center; gap: 8px; }
+        .order-control { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--text-secondary); }
+        .order-select {
+            padding: 4px 6px; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+            background: var(--bg-primary); color: var(--text-primary); font-size: 0.75rem; font-family: inherit;
+        }
+        .table-wrapper { overflow-x: auto; max-height: 70vh; overflow-y: auto; }
+        .pagos-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+        .pagos-table thead { position: sticky; top: 0; z-index: 2; background: #1f2937; }
+        .pagos-table th {
+            padding: 8px 6px; text-align: center; background: var(--bg-tertiary); color: var(--text-secondary);
+            font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--brand-primary); white-space: nowrap;
+        }
+        .pagos-table td {
+            padding: 7px 6px; text-align: center; border-bottom: 1px solid var(--border-subtle);
+            font-size: 0.78rem; color: var(--text-primary);
+        }
+        .pagos-table tbody tr:hover { background: var(--bg-tertiary); }
+        .col-num { width: 40px; font-weight: bold; color: var(--brand-primary); }
+        .col-ced { width: 110px; text-align: right !important; padding-right: 10px !important; }
+        .col-nom { text-align: left !important; padding-left: 8px !important; max-width: 50px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .col-fec { width: 90px; }
+        .col-rec { width: 80px; }
+        .col-con { width: 310px; text-align: left !important; padding-left: 8px !important; }
+        .col-val { width: 90px; }
+        .valor-pago {
+            background: rgba(76,175,80,0.15); color: #4CAF50; padding: 2px 8px;
+            border-radius: var(--radius-sm); font-weight: 600; font-size: 0.72rem; white-space: nowrap;
+        }
+        .no-pagos {
+            text-align: center; padding: 60px 20px; color: var(--text-muted);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .no-pagos i { font-size: 3rem; margin-bottom: 12px; opacity: 0.3; }
+        .no-pagos p { font-size: 0.85rem; }
+        .badge-recibo {
+            background: rgba(33,150,243,0.15); color: #2196F3; padding: 2px 6px;
+            border-radius: var(--radius-sm); font-weight: 500; font-size: 0.72rem;
+        }
+        .badge-sinrecibo {
+            background: rgba(158,158,158,0.15); color: #9E9E9E; padding: 2px 6px;
+            border-radius: var(--radius-sm); font-size: 0.72rem; font-style: italic;
+        }
+        .con-mes {
+            color: #FFC107; font-weight: 600; font-size: 0.72rem;
+        }
+        .con-cert {
+            color: #f44336; font-weight: 600; font-size: 0.72rem;
+        }
+        .btn-recibo {
+            background: #2196F3; color: white; border: none; border-radius: var(--radius-sm);
+            padding: 3px 8px; font-size: 0.68rem; cursor: pointer; font-weight: 600;
+            font-family: inherit; white-space: nowrap; transition: all 0.2s;
+        }
+        .btn-recibo:hover { background: #1976D2; transform: scale(1.05); }
+        .btn-recibo-sin {
+            background: #9E9E9E; color: white; border: none; border-radius: var(--radius-sm);
+            padding: 3px 8px; font-size: 0.68rem; cursor: default; font-weight: 500;
+            font-family: inherit; opacity: 0.5;
+        }
+        .modal-overlay {
+            display: none;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-recibo {
+            background: var(--bg-surface); border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl); padding: var(--space-4); max-width: 440px;
+            width: 90vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        .modal-recibo-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle);
+        }
+        .modal-recibo-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+        .modal-recibo-close {
+            background: none; border: none; color: var(--text-secondary); cursor: pointer;
+            font-size: 1.2rem; padding: 4px; border-radius: 50%; width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .modal-recibo-close:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+        .receipt-preview-wrapper {
+            background: white; border-radius: var(--radius-md); padding: 16px;
+            margin-bottom: 16px; display: flex; justify-content: center;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .receipt-paper {
+            width: 220px; background: white; padding: 8px 12px; font-family: 'Courier New', monospace;
+            font-size: 11px; line-height: 1.3; color: #000; box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+            border-radius: 2px;
+        }
+        .receipt-paper .rec-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 6px; margin-bottom: 6px; }
+        .receipt-paper .rec-title { font-weight: bold; font-size: 12px; }
+        .receipt-paper .rec-sub { font-size: 9px; }
+        .receipt-paper .rec-row { display: flex; justify-content: space-between; margin: 2px 0; }
+        .receipt-paper .rec-label { font-weight: bold; }
+        .receipt-paper .rec-divider { border-top: 1px dashed #000; margin: 6px 0; }
+        .receipt-paper .rec-footer { text-align: center; margin-top: 6px; font-size: 9px; font-style: italic; }
+        .receipt-paper .rec-total { text-align: center; font-weight: bold; font-size: 13px; margin-top: 6px; border-top: 2px solid #000; padding-top: 4px; }
+        .modal-recibo-info {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;
+            background: var(--bg-tertiary); border-radius: var(--radius-md); padding: 12px;
+        }
+        .modal-recibo-info-item { font-size: 0.75rem; }
+        .modal-recibo-info-item .info-label { color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; }
+        .modal-recibo-info-item .info-value { color: var(--text-primary); font-weight: 600; }
+        .modal-recibo-actions {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+        }
+        .modal-recibo-actions button {
+            padding: 10px 8px; border: none; border-radius: var(--radius-md); cursor: pointer;
+            font-size: 0.72rem; font-weight: 600; font-family: inherit; display: flex;
+            align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;
+        }
+        .modal-recibo-actions button:hover { transform: translateY(-1px); filter: brightness(1.1); }
+        .btn-r-print { background: #4CAF50; color: white; }
+        .btn-r-pdf { background: #f44336; color: white; }
+        .btn-r-png { background: #2196F3; color: white; }
+        .btn-r-copy { background: #FF9800; color: white; }
+        .btn-r-share { background: #9C27B0; color: white; }
+        .btn-r-wa { background: #25D366; color: white; }
+    </style>
+    <link rel="stylesheet" href="styles/mobile.css"></head>
+<body>
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="assets/images/Escudo.png" alt="Escudo" class="sidebar-logo" onerror="this.style.display='none'">
+                <div>
+                    <div class="sidebar-brand">J.A.C BATEAS 3</div>
+                    <div class="sidebar-subtitle">Reporte Pagos</div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a class="nav-item" href="panel_new.html"><i class="fas fa-th-large"></i><span>Panel</span></a>
+                <a class="nav-item" href="registro_new.html"><i class="fas fa-user-plus"></i><span>Registro</span></a>
+                <a class="nav-item" href="afiliaciones_new.html"><i class="fas fa-users"></i><span>Afiliaciones</span></a>
+                <a class="nav-item" href="certificados5_new.html"><i class="fas fa-certificate"></i><span>Cert. Afiliacion</span></a>
+                <a class="nav-item" href="registro_vecinos.html"><i class="fas fa-user-friends"></i><span>Registro Vecinos</span></a>
+                <a class="nav-item" href="carta-vecina.html"><i class="fas fa-scroll"></i><span>Cert Vecino</span></a>
+                <a class="nav-item" href="certificados5_copia.html"><i class="fas fa-file-alt"></i><span>Constancia No Inscripcion</span></a>
+                <a class="nav-item" href="traslado_new.html"><i class="fas fa-exchange-alt"></i><span>Cert. Traslado</span></a>
+                <a class="nav-item" href="certificadovotacion_new.html"><i class="fas fa-vote-yea"></i><span>Cert. Votaciones</span></a>
+                <a class="nav-item" href="asistencia_new.html"><i class="fas fa-clipboard-check"></i><span>Asistencia</span></a>
+                <a class="nav-item" href="documentos_new.html"><i class="fas fa-folder-open"></i><span>Documentos</span></a>
+                <a class="nav-item active" href="contador_new.html"><i class="fas fa-chart-line"></i><span>Reporte Pagos</span></a>
+                <a class="nav-item" href="informes_new.html"><i class="fas fa-file-alt"></i><span>Informes</span></a>
+                <a class="nav-item" href="gastos.html"><i class="fas fa-money-bill-wave"></i><span>Gastos</span></a>
+                <a class="nav-item" href="tesoreria.html"><i class="fas fa-wallet"></i><span>Tesoreria</span></a>
+                <a class="nav-item" href="usuarios_new.html"><i class="fas fa-users-cog"></i><span>Usuarios</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn-icon" id="themeToggle" data-tooltip="Cambiar tema"><i class="fas fa-moon"></i></button>
+                <button class="btn-icon" id="logoutBtn" data-tooltip="Cerrar sesion"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="btn-icon sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title"><i class="fas fa-chart-line"></i> Reporte de Pagos</h1>
+                </div>
+                <div class="topbar-right">
+                    <span class="current-date" id="currentDate"></span>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <div class="page-content">
+                    <div class="filters-container">
+                        <div class="filters-grid">
+                            <div class="filter-group">
+                                <div class="filter-label"><i class="fas fa-search"></i> Buscar</div>
+                                <input type="text" class="filter-input" id="searchInput" placeholder="Cedula o Nombre">
+                            </div>
+                            <div class="filter-group">
+                                <div class="filter-label"><i class="fas fa-play-circle" style="color:#4CAF50;"></i> FECHA INICIO</div>
+                                <input type="date" id="fechaInicio" class="filter-input" value="2025-01-01">
+                            </div>
+                            <div class="filter-group">
+                                <div class="filter-label"><i class="fas fa-stop-circle" style="color:#FF9800;"></i> FECHA FIN</div>
+                                <input type="date" id="fechaFin" class="filter-input" value="2026-12-31">
+                            </div>
+                            <div class="filter-group">
+                                <div class="filter-label"><i class="fas fa-bolt"></i> Rapidos</div>
+                                <div class="quick-btns">
+                                    <button class="btn btn-sm btn-secondary" id="btnEjemplo">Ejemplo</button>
+                                    <button class="btn btn-sm btn-secondary" id="btnTodos">Todos</button>
+                                    <button class="btn btn-sm btn-primary" id="btnFiltrar"><i class="fas fa-filter"></i> Filtrar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="results-container" id="resultsContainer">
+                        <div class="results-header">
+                            <h3 class="results-title"><i class="fas fa-receipt"></i> Resultados de Pagos</h3>
+                            <div class="stats">
+                                <div class="stat-box"><div class="stat-value" id="totalPagos">0</div><div class="stat-label">Total Pagos</div></div>
+                                <div class="stat-box"><div class="stat-value" id="totalValor">$0</div><div class="stat-label">Valor Total</div></div>
+                                <div class="stat-box"><div class="stat-value" id="totalUsuarios">0</div><div class="stat-label">Usuarios</div></div>
+                            </div>
+                            <div class="table-controls">
+                                <div class="order-control">
+                                    <label>Ordenar:</label>
+                                    <select class="order-select" id="orderBy">
+                                        <option value="numero">N°</option>
+                                        <option value="cedula">Cedula</option>
+                                        <option value="nombre">Nombre</option>
+                                        <option value="fecha">Fecha</option>
+                                    </select>
+                                    <select class="order-select" id="orderDir">
+                                        <option value="desc">↓</option>
+                                        <option value="asc">↑</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-sm btn-danger" id="btnPDF"><i class="fas fa-file-pdf"></i> PDF</button>
+                            </div>
+                        </div>
+                        <div class="table-wrapper">
+                            <div id="tableContainer">
+                                <div class="no-pagos"><i class="fas fa-spinner fa-spin"></i><p>Cargando datos...</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="modalRecibo">
+        <div class="modal-recibo">
+            <div class="modal-recibo-header">
+                <span class="modal-recibo-title"><i class="fas fa-receipt"></i> Vista Previa Recibo</span>
+                <button class="modal-recibo-close" id="btnCloseRecibo"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="receipt-preview-wrapper">
+                <div class="receipt-paper" id="receiptContent"></div>
+            </div>
+            <div class="modal-recibo-info" id="reciboInfo"></div>
+            <div class="modal-recibo-actions">
+                <button class="btn-r-print" id="btnRPrint"><i class="fas fa-print"></i> Imprimir</button>
+                <button class="btn-r-pdf" id="btnRPdf"><i class="fas fa-file-pdf"></i> PDF</button>
+                <button class="btn-r-png" id="btnRPng"><i class="fas fa-image"></i> PNG</button>
+                <button class="btn-r-copy" id="btnRCopy"><i class="fas fa-copy"></i> Copiar</button>
+                <button class="btn-r-share" id="btnRShare"><i class="fas fa-share-alt"></i> Compartir</button>
+                <button class="btn-r-wa" id="btnRWa"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="core/event-bus.js"></script>
+    <script src="core/app-state.js"></script>
+    <script src="core/auth-service.js"></script>
+    <script src="core/data-service.js"></script>
+    <script src="shared/utils/app-name.js"></script>
+    <script>
+        var datosCuota = null;
+        var datosTabla = [];
+        var _reciboActual = null;
+        var _reciboCanvas = null;
+
+        document.addEventListener('click', function(e) {
+            var btn = e.target;
+            while (btn && btn !== document) {
+                if (btn.classList && btn.classList.contains('btn-recibo') && btn.getAttribute('data-idx') !== null) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var idx = parseInt(btn.getAttribute('data-idx'));
+                    if (!isNaN(idx)) _abrirRecibo(idx);
+                    return false;
+                }
+                btn = btn.parentNode;
+            }
+        }, true);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('currentDate').textContent = new Date().toLocaleDateString('es-ES', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+            document.getElementById('btnFiltrar').onclick = cargarYMostrar;
+            document.getElementById('btnEjemplo').onclick = function() {
+                document.getElementById('fechaInicio').value = '2025-01-01';
+                document.getElementById('fechaFin').value = '2026-06-30';
+                document.getElementById('searchInput').value = '';
+                cargarYMostrar();
+            };
+            document.getElementById('btnTodos').onclick = function() {
+                document.getElementById('fechaInicio').value = '';
+                document.getElementById('fechaFin').value = '';
+                document.getElementById('searchInput').value = '';
+                cargarYMostrar();
+            };
+            document.getElementById('searchInput').onkeypress = function(e) { if (e.key === 'Enter') cargarYMostrar(); };
+            document.getElementById('orderBy').onchange = function() { renderTabla(); };
+            document.getElementById('orderDir').onchange = function() { renderTabla(); };
+            document.getElementById('btnPDF').onclick = generarPDF;
+            function setupTheme() {
+                var saved = localStorage.getItem('theme') || 'dark';
+                document.documentElement.dataset.theme = saved;
+                updateThemeIcon(saved);
+                document.getElementById('themeToggle').addEventListener('click', function() {
+                    var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+                    document.documentElement.dataset.theme = next;
+                    localStorage.setItem('theme', next);
+                    updateThemeIcon(next);
+                });
+                function updateThemeIcon(theme) {
+                    var icon = document.querySelector('#themeToggle i');
+                    icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+                }
+            }
+            setupTheme();
+            cargarYMostrar();
+
+            document.getElementById('sidebarToggle').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('collapsed');
+            });
+
+            document.getElementById('btnCloseRecibo').addEventListener('click', closeModalRecibo);
+            document.getElementById('modalRecibo').addEventListener('click', function(e) { if (e.target === this) closeModalRecibo(); });
+            document.getElementById('btnRPrint').addEventListener('click', printRecibo);
+            document.getElementById('btnRPdf').addEventListener('click', downloadPdfRecibo);
+            document.getElementById('btnRPng').addEventListener('click', downloadPngRecibo);
+            document.getElementById('btnRCopy').addEventListener('click', copyRecibo);
+            document.getElementById('btnRShare').addEventListener('click', shareRecibo);
+            document.getElementById('btnRWa').addEventListener('click', shareWhatsAppRecibo);
+
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                if (firebase.auth().currentUser) {
+                    if (confirm('Cerrar sesion?')) {
+                        firebase.auth().signOut().then(function() { window.location.href = 'index_new.html'; });
+                    }
+                } else {
+                    window.location.href = 'index_new.html';
+                }
+            });
+        });
+
+        async function cargarYMostrar() {
+            datosCuota = null;
+            await fetchCuota();
+        }
+
+        async function fetchCuota() {
+            document.getElementById('tableContainer').innerHTML = '<div class="no-pagos"><i class="fas fa-spinner fa-spin"></i><p>Cargando datos desde Firebase...</p></div>';
+
+            try {
+                var db = firebase.firestore();
+                var doc = await db.collection('cuota').doc('data').get();
+                if (doc.exists) {
+                    var data = doc.data();
+                    if (data && data.pagos && data.pagos.length > 0) {
+                        datosCuota = data;
+                        procesarDatos();
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.log('Error Firestore:', e);
+            }
+
+            document.getElementById('tableContainer').innerHTML = '<div class="no-pagos"><i class="fas fa-info-circle"></i><p>Firebase sin datos, cargando local...</p></div>';
+            await fetchCuotaLocal();
+        }
+
+        async function fetchCuotaLocal() {
+            var data = null;
+
+            try {
+                if (typeof window.electronAPI !== 'undefined' && window.electronAPI.readDataFile) {
+                    var result = await window.electronAPI.readDataFile('cuota.json');
+                    if (result.success) data = result.content;
+                }
+            } catch(e) {}
+            if (!data) {
+                try {
+                    var resp = await fetch('assets/data/cuota.json');
+                    if (resp.ok) data = await resp.json();
+                } catch(e) {}
+            }
+            if (!data) {
+                var backup = localStorage.getItem('cuota_backup');
+                if (backup) data = JSON.parse(backup);
+            }
+
+            if (data && data.pagos) {
+                datosCuota = data;
+                procesarDatos();
+                document.getElementById('tableContainer').insertAdjacentHTML('afterbegin', '<div style="padding:6px 12px;background:#fff3cd;color:#856404;font-size:11px;border-radius:4px;margin-bottom:8px;">Datos cargados desde almacenamiento local</div>');
+            } else {
+                document.getElementById('tableContainer').innerHTML = '<div class="no-pagos"><i class="fas fa-exclamation-triangle"></i><p>No se encontraron datos de pagos en Firebase ni en local</p></div>';
+            }
+        }
+
+        function procesarDatos() {
+            if (!datosCuota || !datosCuota.pagos) {
+                document.getElementById('tableContainer').innerHTML = '<div class="no-pagos"><i class="fas fa-exclamation-triangle"></i><p>No hay datos de cuota</p></div>';
+                return;
+            }
+
+            var busqueda = document.getElementById('searchInput').value.trim().toLowerCase();
+            var fiStr = document.getElementById('fechaInicio').value;
+            var ffStr = document.getElementById('fechaFin').value;
+            var fechaInicio = fiStr ? new Date(fiStr + 'T00:00:00') : null;
+            var fechaFin = ffStr ? new Date(ffStr + 'T23:59:59') : null;
+
+            var mapa = {};
+
+            datosCuota.pagos.forEach(function(p) {
+                var ced = String(p.cedula || '');
+                var nom = p.nombre || '';
+
+                var campos = ['certificado', 'fecha_pago_a\u00f1o_2025', 'fecha_pago_a\u00f1o_2026'];
+                campos.forEach(function(campo) {
+                    var valor = p[campo];
+                    if (!valor) return;
+                    valor.split(';').forEach(function(str) {
+                        str = str.trim();
+                        if (!str) return;
+                        var pago = parsearPago(str);
+                        if (!pago) return;
+
+                        if (fechaInicio && pago.fechaObj < fechaInicio) return;
+                        if (fechaFin && pago.fechaObj > fechaFin) return;
+                        if (busqueda && ced.toLowerCase().indexOf(busqueda) === -1 && nom.toLowerCase().indexOf(busqueda) === -1) return;
+
+                        var clave = pago.recibo ? (ced + '_' + pago.recibo) : (ced + '_' + pago.fecha);
+                        if (mapa[clave]) {
+                            mapa[clave].valor += parseInt(pago.valor);
+                            if (mapa[clave].conceptos.indexOf(pago.concepto) === -1) {
+                                mapa[clave].conceptos.push(pago.concepto);
+                            }
+                        } else {
+                            mapa[clave] = {
+                                cedula: ced, nombre: nom,
+                                fecha: pago.fecha, fechaObj: pago.fechaObj,
+                                recibo: pago.recibo, valor: parseInt(pago.valor),
+                                conceptos: [pago.concepto]
+                            };
+                        }
+                    });
+                });
+            });
+
+            datosTabla = [];
+            for (var k in mapa) {
+                var item = mapa[k];
+                item.conceptoHtml = item.conceptos.map(function(c) {
+                    if (c.indexOf('CERT') === 0) return '<span class="con-cert">' + c + '</span>';
+                    return '<span class="con-mes">' + c + '</span>';
+                }).join(', ');
+                item.concepto = item.conceptos.join(', ');
+                datosTabla.push(item);
+            }
+            renderTabla();
+        }
+
+        function parsearPago(str) {
+            var parts = str.split('_');
+            if (parts.length < 5) return null;
+
+            var mes = parts[0].toLowerCase();
+            var anio = parts[1];
+            var valor = parts[2].replace(/\./g, '');
+            var fechaHora = parts[3];
+            var reciboRaw = parts[parts.length - 1];
+            var recibo = (reciboRaw === 'sinrecibo' || reciboRaw === '') ? '' : reciboRaw;
+
+            var fp = fechaHora.split('/');
+            if (fp.length !== 3) return null;
+            var fechaObj = new Date(parseInt(fp[2]), parseInt(fp[1]) - 1, parseInt(fp[0]));
+            var fecha = fp[0] + '/' + fp[1] + '/' + fp[2];
+
+            var meses = {enero:'ENE',febrero:'FEB',marzo:'MAR',abril:'ABR',mayo:'MAY',junio:'JUN',julio:'JUL',agosto:'AGO',septiembre:'SEP',octubre:'OCT',noviembre:'NOV',diciembre:'DIC'};
+            var mesAbrev = meses[mes] || mes.substring(0, 3).toUpperCase();
+            var esCert = parseInt(valor) >= 10000;
+            var concepto = esCert ? 'CERT ' + mesAbrev : mesAbrev;
+
+            return { fecha: fecha, fechaObj: fechaObj, valor: valor, recibo: recibo, concepto: concepto };
+        }
+
+        function renderTabla() {
+            var container = document.getElementById('tableContainer');
+            if (datosTabla.length === 0) {
+                container.innerHTML = '<div class="no-pagos"><i class="fas fa-receipt"></i><p>No hay pagos para mostrar.</p></div>';
+                document.getElementById('totalPagos').textContent = '0';
+                document.getElementById('totalValor').textContent = '$0';
+                document.getElementById('totalUsuarios').textContent = '0';
+                return;
+            }
+
+            var campo = document.getElementById('orderBy').value;
+            var dir = document.getElementById('orderDir').value;
+            datosTabla.sort(function(a, b) {
+                var va, vb;
+                if (campo === 'numero') { va = a.recibo || '0'; vb = b.recibo || '0'; }
+                else if (campo === 'cedula') { va = a.cedula; vb = b.cedula; }
+                else if (campo === 'nombre') { va = a.nombre.toLowerCase(); vb = b.nombre.toLowerCase(); }
+                else if (campo === 'fecha') { va = a.fechaObj.getTime(); vb = b.fechaObj.getTime(); }
+                else { va = a.recibo || '0'; vb = b.recibo || '0'; }
+                if (dir === 'asc') return va > vb ? 1 : va < vb ? -1 : 0;
+                return va < vb ? 1 : va > vb ? -1 : 0;
+            });
+
+            var totalVal = 0;
+            var ceds = {};
+            var html = '<table class="pagos-table"><thead><tr>';
+            html += '<th class="col-num">N°</th>';
+            html += '<th class="col-ced">CEDULA</th>';
+            html += '<th class="col-nom">NOMBRE COMPLETO</th>';
+            html += '<th class="col-fec">FECHA</th>';
+            html += '<th class="col-rec">RECIBO</th>';
+            html += '<th class="col-con">CONCEPTO</th>';
+            html += '<th class="col-val">VALOR</th>';
+            html += '<th style="width:100px;">ACCION</th>';
+            html += '</tr></thead><tbody>';
+
+            datosTabla.forEach(function(p, i) {
+                totalVal += parseInt(p.valor) || 0;
+                ceds[p.cedula] = true;
+                var reciboHtml = p.recibo ? '<span class="badge-recibo">' + p.recibo + '</span>' : '<span class="badge-sinrecibo">-</span>';
+                var btnRecibo = p.recibo ? '<button class="btn-recibo" data-idx="' + i + '">Ver</button>' : '<button class="btn-recibo-sin" disabled>Sin recibo</button>';
+                html += '<tr>';
+                html += '<td class="col-num">' + (i + 1) + '</td>';
+                html += '<td class="col-ced">' + p.cedula + '</td>';
+                html += '<td class="col-nom">' + p.nombre + '</td>';
+                html += '<td class="col-fec">' + p.fecha + '</td>';
+                html += '<td class="col-rec">' + reciboHtml + '</td>';
+                html += '<td class="col-con">' + p.conceptoHtml + '</td>';
+                html += '<td class="col-val"><span class="valor-pago">$' + parseInt(p.valor).toLocaleString('es-CO') + '</span></td>';
+                html += '<td>' + btnRecibo + '</td>';
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+
+            document.getElementById('totalPagos').textContent = datosTabla.length.toLocaleString('es-CO');
+            document.getElementById('totalValor').textContent = '$' + totalVal.toLocaleString('es-CO');
+            document.getElementById('totalUsuarios').textContent = Object.keys(ceds).length.toLocaleString('es-CO');
+        }
+
+        function generarPDF() {
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                alert('jsPDF no esta disponible');
+                return;
+            }
+            if (datosTabla.length === 0) return;
+            var jsPDF = window.jspdf.jsPDF;
+            var pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            pdf.setFontSize(14);
+            pdf.setTextColor(51, 105, 30);
+            pdf.text('REPORTE DE PAGOS - BATEAS SECTOR 3', 20, 15);
+            pdf.setFontSize(9);
+            pdf.setTextColor(100, 100, 100);
+            pdf.text('Fecha: ' + new Date().toLocaleDateString('es-CO'), 20, 22);
+
+            var headers = ['N°', 'CEDULA', 'NOMBRE', 'FECHA', 'RECIBO', 'CONCEPTO', 'VALOR'];
+            var colW = [10, 25, 50, 25, 20, 30, 35];
+            var yPos = 32;
+            pdf.setFontSize(8);
+            pdf.setFillColor(139, 195, 74);
+            pdf.setTextColor(255, 255, 255);
+            pdf.rect(20, yPos - 4, 195, 6, 'F');
+            var xPos = 21;
+            headers.forEach(function(h, i) { pdf.text(h, xPos, yPos); xPos += colW[i]; });
+            yPos += 8;
+            pdf.setTextColor(0, 0, 0);
+
+            datosTabla.forEach(function(p, idx) {
+                if (yPos > 190) { pdf.addPage(); yPos = 20; }
+                if (idx % 2 === 0) { pdf.setFillColor(241, 248, 233); pdf.rect(20, yPos - 3, 195, 5, 'F'); }
+                xPos = 21;
+                var vals = [String(idx + 1), p.cedula, p.nombre, p.fecha, p.recibo || '-', p.concepto, '$' + parseInt(p.valor).toLocaleString('es-CO')];
+                vals.forEach(function(v, i) { pdf.text(String(v), xPos, yPos); xPos += colW[i]; });
+                yPos += 6;
+            });
+
+            pdf.save('reporte_pagos.pdf');
+        }
+
+
+        function _abrirRecibo(idx) {
+            try {
+                var p = datosTabla[idx];
+                if (!p || !p.recibo) return;
+                _reciboActual = p;
+
+                var mesesN = {ENE:'Enero',FEB:'Febrero',MAR:'Marzo',ABR:'Abril',MAY:'Mayo',JUN:'Junio',JUL:'Julio',AGO:'Agosto',SEP:'Septiembre',OCT:'Octubre',NOV:'Noviembre',DIC:'Diciembre'};
+                var conceptos = p.conceptos || [p.concepto];
+                var mesesList = [];
+                var esCert = false;
+                conceptos.forEach(function(c) {
+                    var abbr = c.replace('CERT ', '');
+                    if (c.indexOf('CERT') === 0) esCert = true;
+                    if (mesesN[abbr]) mesesList.push({nombre: mesesN[abbr], valor: parseInt(p.valor)});
+                });
+
+                var th = '<div id="tirillaRecibo" style="width:57mm;font-family:Courier New,monospace;background:white;color:#000;padding:2mm;font-size:2.8mm;line-height:1.3;position:relative;overflow:hidden;">';
+                var logoUrl = 'assets/images/Escudo.png';
+                th += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0.08;pointer-events:none;z-index:0;background-image:url(\''+logoUrl+'\');background-size:100% auto;background-repeat:no-repeat;background-position:center center;"></div>';
+                th += '<div style="position:relative;z-index:1;">';
+                th += '<div style="text-align:center;border-bottom:2px dashed #000;padding-bottom:1.5mm;margin-bottom:1.5mm;">';
+                th += '<div style="font-size:3.2mm;font-weight:bold;">JUNTA DE ACCION COMUNAL</div>';
+                th += '<div style="font-size:2.8mm;font-weight:bold;">BARRIO BATEAS - SECTOR 3</div>';
+                th += '<div style="font-size:2.2mm;">Puerto Gaitan, Meta</div>';
+                th += '<div style="font-size:2mm;margin-top:0.5mm;">Personeria Juridica No. 451</div></div>';
+                th += '<div style="text-align:center;font-weight:bold;font-size:3.5mm;margin:1.5mm 0;border:2px solid #000;padding:1mm;">RECIBO DE PAGO</div>';
+                th += '<div style="border-bottom:1px dashed #000;padding-bottom:1mm;margin-bottom:1mm;">';
+                th += '<div style="display:flex;justify-content:space-between;font-size:2.6mm;"><span>Recibo N:</span><span style="font-weight:bold;font-size:2.8mm;">' + p.recibo + '</span></div>';
+                th += '<div style="display:flex;justify-content:space-between;font-size:2.6mm;"><span>Fecha:</span><span>' + p.fecha + '</span></div>';
+                th += '<div style="display:flex;justify-content:space-between;font-size:2.6mm;"><span>Hora:</span><span>' + new Date().toLocaleTimeString('es-CO', {hour:'2-digit',minute:'2-digit',second:'2-digit'}) + '</span></div></div>';
+                th += '<div style="border-bottom:1px dashed #000;padding-bottom:1mm;margin-bottom:1mm;">';
+                th += '<div style="font-size:2.6mm;font-weight:bold;margin-bottom:0.5mm;">AFILIADO/A:</div>';
+                th += '<div style="font-size:2.8mm;font-weight:bold;">' + p.nombre + '</div>';
+                th += '<div style="font-size:2.6mm;">C.C. ' + p.cedula + '</div></div>';
+                th += '<div style="border-bottom:1px dashed #000;padding-bottom:1mm;margin-bottom:1mm;">';
+                th += '<div style="font-size:2.6mm;font-weight:bold;margin-bottom:0.5mm;">DETALLE:</div>';
+                mesesList.forEach(function(m) {
+                    th += '<div style="display:flex;justify-content:space-between;font-size:2.8mm;padding:0.5mm 0;"><span>' + m.nombre + '</span><span>$' + m.valor.toLocaleString('es-CO') + '</span></div>';
+                });
+                if (esCert) {
+                    th += '<div style="display:flex;justify-content:space-between;font-size:2.8mm;padding:0.5mm 0;border-top:1px dashed #000;margin-top:1mm;padding-top:1mm;"><span>Certificado</span><span>$20.000</span></div>';
+                }
+                th += '</div>';
+                th += '<div style="border-bottom:2px dashed #000;padding-bottom:1mm;margin-bottom:1mm;">';
+                th += '<div style="display:flex;justify-content:space-between;font-size:3.5mm;font-weight:bold;"><span>TOTAL:</span><span>$' + parseInt(p.valor).toLocaleString('es-CO') + '</span></div></div>';
+                th += '<div style="border-bottom:1px dashed #000;padding-bottom:1mm;margin-bottom:1mm;">';
+                th += '<div style="display:flex;justify-content:space-between;font-size:2.6mm;"><span style="font-weight:bold;">PAGO:</span><span>Efectivo</span></div>';
+                th += '</div>';
+                th += '<div style="text-align:center;font-size:2.2mm;margin-top:2mm;"><div>Gracias por su pago</div><div style="margin-top:1mm;">Junta de Accion Comunal</div><div>Barrio Bateas Sector 3</div></div></div></div>';
+
+                document.getElementById('receiptContent').innerHTML = th;
+
+                var infoHtml = '';
+                infoHtml += '<div class="modal-recibo-info-item"><div class="info-label">Recibo</div><div class="info-value">' + p.recibo + '</div></div>';
+                infoHtml += '<div class="modal-recibo-info-item"><div class="info-label">Fecha</div><div class="info-value">' + p.fecha + '</div></div>';
+                infoHtml += '<div class="modal-recibo-info-item"><div class="info-label">Nombre</div><div class="info-value">' + p.nombre + '</div></div>';
+                infoHtml += '<div class="modal-recibo-info-item"><div class="info-label">Cedula</div><div class="info-value">' + p.cedula + '</div></div>';
+                infoHtml += '<div class="modal-recibo-info-item"><div class="info-label">Concepto</div><div class="info-value">' + p.concepto + '</div></div>';
+                infoHtml += '<div class="modal-recibo-info-item"><div class="info-label">Valor</div><div class="info-value" style="color:#4CAF50;font-size:1rem;">$' + parseInt(p.valor).toLocaleString('es-CO') + '</div></div>';
+                document.getElementById('reciboInfo').innerHTML = infoHtml;
+
+                document.getElementById('modalRecibo').classList.add('active');
+                _reciboCanvas = null;
+            } catch(e) {
+                console.error('Error verRecibo:', e);
+                alert('Error al mostrar recibo: ' + e.message);
+            }
+        }
+
+        function closeModalRecibo() {
+            document.getElementById('modalRecibo').classList.remove('active');
+            _reciboActual = null;
+            _reciboCanvas = null;
+        }
+
+        function _getReciboCanvas(callback) {
+            if (_reciboCanvas) return callback(_reciboCanvas);
+            var el = document.getElementById('tirillaRecibo');
+            if (!el) return alert('No hay recibo para generar imagen');
+            if (typeof html2canvas === 'undefined') return alert('html2canvas no esta disponible');
+            
+            // Esperar a que el logo (watermark) cargue
+            var logoEl = el.querySelector('div[style*="background-image"]');
+            if (logoEl) {
+                var bg = logoEl.style.backgroundImage;
+                var match = bg.match(/url\(['"]?([^'")]+)['"]?\)/);
+                if (match) {
+                    var img = new Image();
+                    img.src = match[1];
+                    if (!img.complete) {
+                        img.onload = function() { _doCapture(); };
+                        img.onerror = function() { _doCapture(); }; // continuar aunque falle
+                        return;
+                    }
+                }
+            }
+            _doCapture();
+            
+            function _doCapture() {
+                html2canvas(el, { scale: 3, useCORS: true, allowTaint: true, backgroundColor: '#FFFFFF' }).then(function(canvas) {
+                    _reciboCanvas = canvas;
+                    callback(canvas);
+                }).catch(function(err) {
+                    console.error('html2canvas error:', err);
+                    alert('Error al generar imagen: ' + err.message);
+                });
+            }
+        }
+
+        function printRecibo() {
+            _getReciboCanvas(function(cv) {
+                var receiptWidthMM = 57;
+                var ratio = cv.height / cv.width;
+                var receiptHeightMM = Math.round(receiptWidthMM * ratio);
+                var pdf = new jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: [receiptWidthMM, receiptHeightMM], hotfixes: ['px_scaling'] });
+                pdf.addImage(cv.toDataURL('image/png'), 'PNG', 0, 0, receiptWidthMM, receiptHeightMM);
+                var dataUrl = cv.toDataURL('image/png');
+                var pw = window.open('', '_blank');
+                if (pw) {
+                    pw.document.write('<html><head><title>Imprimir Recibo</title><style>@page{size:' + receiptWidthMM + 'mm ' + receiptHeightMM + 'mm;margin:0;}body{margin:0;padding:0;}img{width:' + receiptWidthMM + 'mm;height:auto;display:block;margin:0;}</style></head><body><img src="' + dataUrl + '" onload="setTimeout(function(){window.print();},500);"></body></html>');
+                    pw.document.close();
+                }
+            });
+        }
+
+        function downloadPdfRecibo() {
+            if (!window.jspdf || !window.jspdf.jsPDF) return alert('jsPDF no disponible');
+            _getReciboCanvas(function(cv) {
+                var jsPDF = window.jspdf.jsPDF;
+                var receiptWidthMM = 57;
+                var ratio = cv.height / cv.width;
+                var receiptHeightMM = Math.round(receiptWidthMM * ratio);
+                var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [receiptWidthMM, receiptHeightMM], hotfixes: ['px_scaling'] });
+                pdf.addImage(cv.toDataURL('image/png'), 'PNG', 0, 0, receiptWidthMM, receiptHeightMM);
+                pdf.save('recibo_' + (_reciboActual ? _reciboActual.recibo : 'doc') + '.pdf');
+            });
+        }
+
+        function downloadPngRecibo() {
+            _getReciboCanvas(function(cv) {
+                var link = document.createElement('a');
+                link.download = 'recibo_' + (_reciboActual ? _reciboActual.recibo : 'doc') + '.png';
+                link.href = cv.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+        function copyRecibo() {
+            _getReciboCanvas(function(cv) {
+                cv.toBlob(function(blob) {
+                    try {
+                        navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(function() {
+                            alert('Recibo copiado al portapapeles');
+                        }).catch(function() { alert('No se pudo copiar. Intenta descargar como PNG.'); });
+                    } catch(e) { alert('No se pudo copiar. Intenta descargar como PNG.'); }
+                }, 'image/png');
+            });
+        }
+
+        function shareRecibo() {
+            _getReciboCanvas(function(cv) {
+                cv.toBlob(function(blob) {
+                    if (navigator.share && navigator.canShare) {
+                        var file = new File([blob], 'recibo.png', { type: 'image/png' });
+                        var shareData = { title: 'Recibo BATEAS 3', text: 'Recibo de pago - J.A.C BATEAS 3', files: [file] };
+                        if (navigator.canShare(shareData)) { navigator.share(shareData).catch(function() {}); return; }
+                    }
+                    alert('Funcion de compartir no disponible en este dispositivo.');
+                }, 'image/png');
+            });
+        }
+
+        function shareWhatsAppRecibo() {
+            var phone = prompt('Numero de celular (ej: 3001234567):');
+            if (!phone) return;
+            phone = phone.replace(/[^0-9]/g, '');
+            if (phone.length === 9) phone = '3' + phone;
+            if (phone.length < 10 || phone.length > 12) return alert('Numero invalido: ' + phone);
+            var txt = 'Gracias por mantenerse al dia con sus pagos. JAC Bateas - Barrio Bateas Sector 3 - Puerto Gaitan, Meta';
+            window.open('https://api.whatsapp.com/send?phone=57' + phone + '&text=' + encodeURIComponent(txt), '_blank');
+        }
+    </script>
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="bottom-nav" id="bottomNav">
+        <a class="bottom-nav-item" href="panel_new.html"><i class="fas fa-th-large"></i><span>Panel</span></a>
+        <a class="bottom-nav-item" href="registro_new.html"><i class="fas fa-user-plus"></i><span>Registro</span></a>
+        <a class="bottom-nav-item" href="afiliaciones_new.html"><i class="fas fa-users"></i><span>Afiliados</span></a>
+        <a class="bottom-nav-item" href="certificados5_new.html"><i class="fas fa-certificate"></i><span>Certificados</span></a>
+        <a class="bottom-nav-item" href="asistencia_new.html"><i class="fas fa-clipboard-check"></i><span>Asistencia</span></a>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <img src="assets/images/Escudo.png" alt="Escudo" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Escudo_Acci%C3%B3n_Comunal_Colombia.svg/500px-Escudo_Acci%C3%B3n_Comunal_Colombia.svg.png'">
+            <div>
+                <div class="sidebar-brand">J.A.C BATEAS 3</div>
+                <div class="sidebar-subtitle">Sector 3</div>
+            </div>
+        </div>
+        <a class="nav-item" href="panel_new.html"><i class="fas fa-th-large"></i><span>Panel</span></a>
+        <a class="nav-item" href="registro_new.html"><i class="fas fa-user-plus"></i><span>Registro</span></a>
+        <a class="nav-item" href="afiliaciones_new.html"><i class="fas fa-users"></i><span>Afiliaciones</span></a>
+        <a class="nav-item" href="certificados5_new.html"><i class="fas fa-certificate"></i><span>Cert. Afiliacion</span></a>
+        <a class="nav-item" href="certificados5_copia.html"><i class="fas fa-file-alt"></i><span>Constancia No Inscripcion</span></a>
+        <a class="nav-item" href="traslado_new.html"><i class="fas fa-exchange-alt"></i><span>Cert. Traslado</span></a>
+        <a class="nav-item" href="certificadovotacion_new.html"><i class="fas fa-vote-yea"></i><span>Cert. Votaciones</span></a>
+        <a class="nav-item" href="asistencia_new.html"><i class="fas fa-clipboard-check"></i><span>Asistencia</span></a>
+        <a class="nav-item" href="documentos_new.html"><i class="fas fa-folder-open"></i><span>Documentos</span></a>
+        <a class="nav-item" href="contador_new.html"><i class="fas fa-chart-line"></i><span>Reporte Pagos</span></a>
+        <a class="nav-item" href="informes_new.html"><i class="fas fa-file-alt"></i><span>Informes</span></a>
+        <a class="nav-item" href="gastos.html"><i class="fas fa-money-bill-wave"></i><span>Gastos</span></a>
+        <a class="nav-item" href="tesoreria.html"><i class="fas fa-wallet"></i><span>Tesoreria</span></a>
+        <a class="nav-item" href="usuarios_new.html"><i class="fas fa-users-cog"></i><span>Usuarios</span></a>
+    </div>
+    <script src="https://unpkg.com/@capacitor/status-bar"></script>
+    <script>
+        // Mobile menu toggle
+        var menuBtn = document.getElementById('sidebarToggle');
+        var mobileOverlay = document.getElementById('mobileMenuOverlay');
+        var mobileMenu = document.getElementById('mobileMenu');
+        if (menuBtn) {
+            menuBtn.addEventListener('click', function() {
+                if (mobileOverlay) mobileOverlay.classList.toggle('active');
+                if (mobileMenu) mobileMenu.classList.toggle('active');
+            });
+        }
+        if (mobileOverlay) {
+            mobileOverlay.addEventListener('click', function() {
+                mobileOverlay.classList.remove('active');
+                if (mobileMenu) mobileMenu.classList.remove('active');
+            });
+        }
+        // Mark active bottom nav
+        var currentPage = window.location.pathname.split('/').pop() || 'panel_new.html';
+        document.querySelectorAll('.bottom-nav-item').forEach(function(item) {
+            if (item.getAttribute('href') === currentPage) {
+                item.classList.add('active');
+            }
+        });
+        // Capacitor StatusBar
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar) {
+            window.Capacitor.Plugins.StatusBar.setStyle({ style: 'DARK' });
+            window.Capacitor.Plugins.StatusBar.setBackgroundColor({ color: '#111827' });
+        }
+    </script>
+</body>
+</html>
+
+

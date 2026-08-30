@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificado de Afiliacion - J.A.C BATEAS 3</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="styles/design-system.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="styles/certificados.css">
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);</script>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="../assets/images/Escudo.png" alt="Escudo" class="sidebar-logo" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Escudo_Acci%C3%B3n_Comunal_Colombia.svg/500px-Escudo_Acci%C3%B3n_Comunal_Colombia.svg.png'">
+                <div>
+                    <div class="sidebar-brand">J.A.C BATEAS 3</div>
+                    <div class="sidebar-subtitle">Certificados</div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a class="nav-item" href="panel_new.html"><i class="fas fa-th-large"></i><span>Panel</span></a>
+                <a class="nav-item" href="registro_new.html"><i class="fas fa-user-plus"></i><span>Registro</span></a>
+                <a class="nav-item" href="afiliaciones_new.html"><i class="fas fa-users"></i><span>Afiliaciones</span></a>
+                <a class="nav-item active" href="certificados5_new.html"><i class="fas fa-certificate"></i><span>Cert. Afiliacion</span></a>
+                <a class="nav-item" href="registro_vecinos.html"><i class="fas fa-user-friends"></i><span>Registro Vecinos</span></a>
+                <a class="nav-item" href="carta-vecina.html"><i class="fas fa-scroll"></i><span>Cert Vecino</span></a>
+                <a class="nav-item" href="certificados5_copia.html"><i class="fas fa-file-alt"></i><span>Constancia No Inscripcion</span></a>
+                <a class="nav-item" href="traslado_new.html"><i class="fas fa-exchange-alt"></i><span>Cert. Traslado</span></a>
+                <a class="nav-item" href="certificadovotacion_new.html"><i class="fas fa-vote-yea"></i><span>Cert. Votaciones</span></a>
+                <a class="nav-item" href="asistencia_new.html"><i class="fas fa-clipboard-check"></i><span>Asistencia</span></a>
+                <a class="nav-item" href="documentos_new.html"><i class="fas fa-folder-open"></i><span>Documentos</span></a>
+                <a class="nav-item" href="contador_new.html"><i class="fas fa-chart-line"></i><span>Reporte Pagos</span></a>
+                <a class="nav-item" href="informes_new.html"><i class="fas fa-file-alt"></i><span>Informes</span></a>
+                <a class="nav-item" href="gastos.html"><i class="fas fa-money-bill-wave"></i><span>Gastos</span></a>
+                <a class="nav-item" href="tesoreria.html"><i class="fas fa-wallet"></i><span>Tesoreria</span></a>
+                <a class="nav-item" href="panel_new.html?game=snake"><i class="fas fa-gamepad"></i><span>Culebrita</span></a>
+                <a class="nav-item" href="usuarios_new.html"><i class="fas fa-users-cog"></i><span>Usuarios</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn-icon" id="themeToggle" data-tooltip="Cambiar tema"><i class="fas fa-moon"></i></button>
+                <button class="btn-icon" id="logoutBtn" data-tooltip="Cerrar sesion"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="btn-icon sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title">Certificado de Afiliacion</h1>
+                </div>
+                <div class="topbar-right">
+                    <span class="current-date" id="currentDate"></span>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <div class="page-content">
+
+                    <!-- SEARCH CARD -->
+                    <div class="search-card" id="searchCard">
+                        <h2><i class="fas fa-search"></i> Buscar Afiliado</h2>
+                        <div class="search-row">
+                            <div class="input-group" style="flex:1">
+                                <i class="fas fa-id-card input-icon"></i>
+                                <input type="text" class="input" id="searchInput" placeholder="Cedula, nombre o numero de registro...">
+                            </div>
+                            <button class="btn btn-primary" id="btnOpcion1"><i class="fas fa-file-alt"></i> Opcion 1</button>
+                            <button class="btn btn-success" id="btnOpcion2"><i class="fas fa-check-circle"></i> Opcion 2</button>
+                            <button class="btn btn-warning" id="btnOpcion3"><i class="fas fa-pen-fancy"></i> Opcion 3</button>
+                        </div>
+                    </div>
+
+                    <!-- RESTRICTION CARD (oculto por defecto) -->
+                    <div class="restriction-card hidden" id="restrictionCard">
+                        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                            <div style="width:50px;height:50px;border-radius:50%;background:rgba(239,68,68,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class="fas fa-exclamation-triangle" style="font-size:22px;color:#ef4444;"></i>
+                            </div>
+                            <div>
+                                <h3 style="margin:0;font-size:1.1rem;color:var(--text-primary);">Restriccion de Certificado</h3>
+                                <p style="margin:4px 0 0;font-size:0.8rem;color:var(--text-muted);">El afiliado no cumple con los requisitos</p>
+                            </div>
+                        </div>
+                        <div id="restrictionContent"></div>
+                        <button class="btn btn-secondary" id="btnVolverBuscador" style="margin-top:20px;width:100%;"><i class="fas fa-arrow-left"></i> Volver al Buscador</button>
+                    </div>
+
+                    <!-- RESULTADO CARD (oculto por defecto) -->
+                    <div class="resultado-card hidden" id="resultadoCard">
+                        <h3><i class="fas fa-check-circle"></i> Afiliado Verificado</h3>
+                        <div class="resultado-grid" id="resultadoGrid"></div>
+                        <div class="flex gap-3 mt-4 hidden" id="btnGroupEdicion">
+                            <button class="btn btn-success" id="btnGuardar"><i class="fas fa-save"></i> Guardar Cambios</button>
+                            <button class="btn btn-secondary" id="btnCancelarEdicion"><i class="fas fa-times"></i> Cancelar</button>
+                        </div>
+                    </div>
+
+                    <!-- CERTIFICADO - CONTENIDO IDENTICO AL ORIGINAL -->
+                    <div id="contenido-certificado" style="position:absolute; left:-9999px; top:0;">
+                        <div class="certificado-background" id="certBg"></div>
+                        <div class="certificado-content">
+                            <div class="encabezado-certificado">
+                                <br>
+                                <strong>REPUBLICA DE COLOMBIA</strong><br>
+                                <strong>DEPARTAMENTO DEL META</strong><br>
+                                <strong>PUERTO GAITÁN – META</strong><br>
+                                <strong>JUNTA DE ACCIÓN COMUNAL</strong><br>
+                                <strong>BARRIO BATEAS SECTOR 3</strong><br>
+                                Personería Jurídica No. 451 del 31 de Octubre de 2.025
+                            </div>
+                            <div class="texto-justificado">
+                                El suscrito Presidente de la Junta de Acción Comunal Bateas Sector 3, del Municipio de Puerto Gaitán,
+                                Meta, identificada con Personería Jurídica No. 451 del 31 de octubre de 2025, fundamentado en la Ley
+                                1551 de 2012 que modifica el artículo 91 de la Ley 136 de 1994, el cual establece en su literal F
+                                numeral 6: 'Con relación a la prosperidad integral de su región; Expedirá la certificación para
+                                acreditar la residencia a aquellas personas que residen en el territorio del área de influencia de los
+                                proyectos de exploración y explotación petrolera y minería en general, y que aspiren acceder a labores
+                                como mano de obra no calificada y calificada. Los alcaldes expedirán dichos certificados con base en LOS
+                                REGISTROS ELECTORALES O DE SISBEN, ASÍ COMO LOS REGISTROS OF LOS AFILIADOS DE LAS JUNTAS DE ACCIÓN
+                                COMUNAL.
+                            </div>
+                            <div class="titulo-certificado">
+                                <span style="font-size:18px;">CONSTANCIA DE AFILIACIÓN</span><br>
+                                <strong>La Junta de Acción Comunal del Barrio Bateas Sector 3</strong><br>
+                                HACE CONSTAR:<br>
+                                Que la información suministrada reposa en el libro de afiliados:
+                            </div>
+                            <div class="datos-certificado">
+                                NOMBRE: <strong id="nombre-cert"></strong><br>
+                                CÉDULA: <strong id="cedula-cert"></strong><br>
+                                FECHA DE AFILIACIÓN: <strong id="fecha-cert"></strong><br>
+                                REGISTRO Nº: <strong id="registro-cert"></strong><br>
+                                FOLIO Nº: <strong id="folio-cert"></strong><br>
+                                RENGLÓN Nº: <strong id="renglon-cert"></strong><br>
+                                DIRECCIÓN: <strong id="direccion-cert"></strong><br>
+                            </div>
+                            <div class="datos-certificado1">
+                                La presente constancia se expide a solicitud del interesado, <strong id="fecha-emision"></strong> y
+                                tiene vigencia de <strong>30 dias</strong> a partir de la fecha de su expedición.
+                            </div>
+                            <br>Atentamente,<br><br><br><br>
+                            <div class="firmas-dobles">
+                                <div class="firma-columna">
+                                    <img src="../assets/images/firma-leo.png" class="firma-img firma-leo-img" alt="">
+                                    <img src="../assets/images/sello-leo.png" class="firma-img sello-leo-img" alt="">
+                                    __________________________________<br>
+                                    <strong>LEONEL BAUTISTA CARRANZA</strong><br>
+                                    Presidente<br>
+                                </div>
+                                <div class="firma-columna">
+                                    <img src="../assets/images/firma-liliana1.png" class="firma-img firma-liliana-img" alt="">
+                                    <img src="../assets/images/sello-liliana.png" class="firma-img sello-liliana-img" alt="">
+                                    __________________________________<br>
+                                    <strong>LILIANA LONDOÑO GALLEGO</strong><br>
+                                    Secretaria<br>
+                                </div>
+                            </div>
+                            <br><br><br>
+                            <div style="text-align:justify;font-size:12px;line-height:1.3;margin-top:25px;">
+                                <strong>Código penal colombiano. "ley 599 de 2000 Artículo 287.</strong> Falsedad material en documento
+                                público. El que falsifique documentos públicos que pueda servir de prueba, incurrirá en prisión de tres
+                                (3) a seis (6) años.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- OPTIONS CARD - DESPUES DEL CERTIFICADO -->
+                    <div class="options-card hidden" id="optionsCard">
+                        <div class="options-grid" style="justify-content:center;">
+                            <button class="btn btn-success" id="btnVistaPrevia"><i class="fas fa-eye"></i> Vista Previa</button>
+                            <button class="btn btn-secondary hidden" id="btnOcultarVista"><i class="fas fa-eye-slash"></i> Ocultar</button>
+                            <button class="btn btn-primary" id="btnEditar"><i class="fas fa-edit"></i> Editar</button>
+                            <button class="btn btn-warning" id="btnPNG"><i class="fas fa-image"></i> PNG</button>
+                            <button class="btn btn-danger" id="btnPDF"><i class="fas fa-file-pdf"></i> PDF</button>
+                            <button class="btn btn-info" id="btnImprimir"><i class="fas fa-print"></i> Imprimir</button>
+                            <button class="btn btn-success" id="btnWhatsApp" style="background:#25d366;border-color:#25d366;color:white"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+                        </div>
+                    </div>
+
+                    <!-- PASSWORD MODAL -->
+                    <div class="modal-overlay" id="passwordModal">
+                        <div class="modal" style="max-width:380px;">
+                            <div class="modal-header">
+                                <h3><i class="fas fa-lock" style="margin-right:8px;"></i>Certificado con Firmas</h3>
+                            </div>
+                            <div class="modal-body">
+                                <p style="color:var(--text-secondary);margin-bottom:16px;font-size:0.85rem;">Ingrese la contraseña para acceder al certificado con firmas:</p>
+                                <input type="password" id="inputPassword" class="form-input" placeholder="Contraseña..." style="width:100%;">
+                                <p id="passwordError" style="color:#dc3545;font-size:12px;margin:8px 0 0;display:none;">Contraseña incorrecta</p>
+                            </div>
+                            <div class="modal-footer" style="justify-content:center;gap:8px;">
+                                <button class="btn btn-outline" onclick="document.getElementById('passwordModal').classList.remove('active')">Cancelar</button>
+                                <button class="btn btn-success" id="btnConfirmarPassword">Aceptar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- DEBT DETAIL MODAL -->
+    <div class="modal-overlay" id="debtModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="debtModalTitle">Detalle de Deudas</h3>
+                <button class="btn-icon" id="closeDebtModal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" id="debtModalContent"></div>
+        </div>
+    </div>
+
+    <!-- WHATSAPP MODAL -->
+    <div class="modal-overlay" id="whatsappModal">
+        <div class="modal" style="max-width:400px">
+            <div class="modal-header">
+                <h3><i class="fab fa-whatsapp" style="color:#25d366"></i> Enviar por WhatsApp</h3>
+                <button class="btn-icon" id="closeWhatsAppModal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Numero de telefono</label>
+                    <input type="text" class="input" id="whatsappNumber" placeholder="Numero registrado del usuario">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelWhatsApp">Cancelar</button>
+                <button class="btn btn-success" id="btnEnviarWhatsApp" style="background:#25d366;border-color:#25d366"><i class="fab fa-whatsapp"></i> Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOADING OVERLAY -->
+    <div class="cert-loading" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p class="loading-text" id="loadingText">Procesando...</p>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- SCRIPTS -->
+    <script src="core/event-bus.js"></script>
+    <script src="core/app-state.js"></script>
+    <script src="core/auth-service.js"></script>
+    <script src="shared/components/toast.js"></script>
+    <script src="shared/utils/formatters.js"></script>
+    <script src="shared/utils/app-name.js"></script>
+    <script>
+        // ===== VARIABLES GLOBALES =====
+        let personaEncontrada = null;
+        let datosCargados = [];
+        let pagosCompletos = null;
+        let afiliadoActualParaDetalle = null;
+        let fechaImpresion = null;
+
+        const IMAGENES = {
+            logo: '../assets/images/logo.jpg'
+        };
+
+        const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+        const MESES_NOMBRES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+        // ===== INICIALIZACION =====
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar sesion
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (!user) {
+                    window.location.href = 'index_new.html';
+                    return;
+                }
+            });
+
+            Toast.init();
+            inicializarApp();
+            configurarEventListeners();
+            setupTheme();
+
+            document.getElementById('sidebarToggle').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('collapsed');
+            });
+
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                if (confirm('Cerrar sesion?')) {
+                    firebase.auth().signOut().then(function() { window.location.href = 'index_new.html'; });
+                }
+            });
+        });
+
+        async function inicializarApp() {
+            const today = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = today.toLocaleDateString('es-ES', options);
+            fechaImpresion = today.toISOString().split('T')[0];
+
+            // Cargar imagen de fondo
+            document.getElementById('certBg').style.backgroundImage = `url(${IMAGENES.logo})`;
+
+            // Cargar datos y pagos desde Firestore
+            await cargarDatos();
+            await cargarPagos();
+        }
+
+        function configurarEventListeners() {
+            document.getElementById('btnOpcion1').addEventListener('click', function() { buscarUsuario('con_pagos'); });
+            document.getElementById('btnOpcion2').addEventListener('click', function() { buscarUsuario('sin_pagos'); });
+            document.getElementById('btnVolverBuscador').addEventListener('click', volverAlBuscador);
+            document.getElementById('btnEditar').addEventListener('click', mostrarEdicion);
+            document.getElementById('btnVistaPrevia').addEventListener('click', mostrarVistaPrevia);
+            document.getElementById('btnOcultarVista').addEventListener('click', ocultarVistaPrevia);
+            document.getElementById('btnPNG').addEventListener('click', descargarPNG);
+            document.getElementById('btnPDF').addEventListener('click', descargarPDF);
+            document.getElementById('btnImprimir').addEventListener('click', imprimirCertificado);
+            document.getElementById('btnWhatsApp').addEventListener('click', abrirWhatsAppModal);
+            document.getElementById('btnGuardar').addEventListener('click', guardarCambios);
+            document.getElementById('btnCancelarEdicion').addEventListener('click', cancelarEdicion);
+            document.getElementById('closeWhatsAppModal').addEventListener('click', cerrarWhatsAppModal);
+            document.getElementById('cancelWhatsApp').addEventListener('click', cerrarWhatsAppModal);
+            document.getElementById('btnEnviarWhatsApp').addEventListener('click', enviarWhatsApp);
+            document.getElementById('closeDebtModal').addEventListener('click', cerrarDebtModal);
+
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') buscarUsuario();
+            });
+
+            // Cerrar modales con click afuera
+            document.getElementById('debtModal').addEventListener('click', (e) => {
+                if (e.target.id === 'debtModal') cerrarDebtModal();
+            });
+            document.getElementById('whatsappModal').addEventListener('click', (e) => {
+                if (e.target.id === 'whatsappModal') cerrarWhatsAppModal();
+            });
+
+            // Opcion 3: certificado con firmas
+            document.getElementById('btnOpcion3').addEventListener('click', abrirPasswordModal);
+            document.getElementById('btnConfirmarPassword').addEventListener('click', confirmarPassword);
+            document.getElementById('inputPassword').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') confirmarPassword();
+            });
+        }
+
+        function setupTheme() {
+            const saved = localStorage.getItem('theme') || 'dark';
+            document.documentElement.dataset.theme = saved;
+            document.getElementById('themeToggle').addEventListener('click', () => {
+                const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+                document.documentElement.dataset.theme = next;
+                localStorage.setItem('theme', next);
+                document.querySelector('#themeToggle i').className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            });
+        }
+
+        // ===== CARGA DE DATOS =====
+        async function cargarDatos() {
+            mostrarLoader('Cargando afiliados...');
+            try {
+                var db = firebase.firestore();
+                var doc = await db.collection('afiliados').doc('data').get();
+                if (doc.exists) {
+                    datosCargados = doc.data().afiliados || [];
+                } else {
+                    datosCargados = [];
+                }
+            } catch(e) {
+                console.error('Error Firestore afiliados:', e);
+                datosCargados = [];
+            }
+            ocultarLoader();
+            if (datosCargados.length > 0) {
+                Toast.info('Datos cargados', datosCargados.length + ' afiliados disponibles');
+            }
+        }
+
+        async function cargarPagos() {
+            try {
+                var db = firebase.firestore();
+                var doc = await db.collection('cuota').doc('data').get();
+                if (doc.exists && doc.data().pagos) {
+                    pagosCompletos = doc.data().pagos;
+                    return pagosCompletos;
+                }
+            } catch(e) {
+                console.error('Error Firestore pagos:', e);
+            }
+            return null;
+        }
+
+        // ===== VERIFICACION DE ELEGIBILIDAD =====
+        function haPagadoCuotaMesActual(cedula) {
+            if (!pagosCompletos || !Array.isArray(pagosCompletos)) return false;
+            const ahora = new Date();
+            const mesActual = MESES[ahora.getMonth()];
+            const anioActual = ahora.getFullYear();
+            const registro = pagosCompletos.find(p => p && p.cedula === cedula);
+            if (!registro) return false;
+            const campoAnio = `fecha_pago_año_${anioActual}`;
+            if (!registro[campoAnio] || typeof registro[campoAnio] !== 'string') return false;
+            const pagosArr = registro[campoAnio].split(';');
+            return pagosArr.some(p => p && p.trim().startsWith(`${mesActual}_${anioActual}`));
+        }
+
+        function haPagadoCertificadoMesActual(cedula) {
+            if (!pagosCompletos || !Array.isArray(pagosCompletos)) return false;
+            const ahora = new Date();
+            const mesActual = MESES[ahora.getMonth()];
+            const anioActual = ahora.getFullYear();
+            const patron = `${mesActual}_${anioActual}`;
+            const registro = pagosCompletos.find(p => p && p.cedula === cedula);
+            if (!registro || !registro.certificado || typeof registro.certificado !== 'string') return false;
+            const certs = registro.certificado.split(';');
+            return certs.some(c => c && c.trim().startsWith(patron));
+        }
+
+        function calcularMesesDeuda(cedula, fechaAfiliacion) {
+            if (!pagosCompletos || !Array.isArray(pagosCompletos) || !fechaAfiliacion || typeof fechaAfiliacion !== 'string') return [];
+            const partes = fechaAfiliacion.split('/');
+            if (partes.length < 3) return [];
+            const afiliacion = new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
+            if (isNaN(afiliacion.getTime())) return [];
+            const hoy = new Date();
+            const registro = pagosCompletos.find(p => p.cedula === cedula);
+            const mesesDeuda = [];
+
+            for (let anio = afiliacion.getFullYear(); anio <= hoy.getFullYear(); anio++) {
+                const mesInicio = (anio === afiliacion.getFullYear()) ? afiliacion.getMonth() : 0;
+                const mesFin = (anio === hoy.getFullYear()) ? hoy.getMonth() : 11;
+                for (let mes = mesInicio; mes <= mesFin; mes++) {
+                    let estaPagado = false;
+                    if (registro) {
+                        const campoAnio = `fecha_pago_año_${anio}`;
+                        if (registro[campoAnio]) {
+                            const pagosArr = registro[campoAnio].split(';');
+                            estaPagado = pagosArr.some(p => p.trim().startsWith(`${MESES[mes]}_${anio}`));
+                        }
+                    }
+                    const esCondonado = (anio === 2024) || (anio === 2025 && mes <= 10);
+                    if (!estaPagado && !esCondonado) {
+                        mesesDeuda.push({ anio, mes, nombre: MESES_NOMBRES[mes], valor: 5000 });
+                    }
+                }
+            }
+            return mesesDeuda;
+        }
+
+        async function verificarElegibilidad(cedula, nombre, fechaAfiliacion) {
+            if (!pagosCompletos) {
+                pagosCompletos = await cargarPagos();
+                if (!pagosCompletos) {
+                    Toast.error('Error', 'No se pudo verificar el estado de pagos');
+                    return { elegible: false, debeCuota: true, debeCertificado: true };
+                }
+            }
+            const debeCuota = !haPagadoCuotaMesActual(cedula);
+            const debeCertificado = !haPagadoCertificadoMesActual(cedula);
+            if (debeCuota || debeCertificado) {
+                mostrarRestriccion(nombre, debeCuota, debeCertificado, cedula, fechaAfiliacion);
+                return { elegible: false, debeCuota, debeCertificado };
+            }
+            return { elegible: true };
+        }
+
+        // ===== BUSQUEDA =====
+        async function buscarUsuario(modo) {
+            const searchInput = document.getElementById('searchInput').value.trim();
+            if (!searchInput) {
+                Toast.warning('Atencion', 'Ingrese un numero de cedula, nombre o registro');
+                return;
+            }
+            try {
+                mostrarLoader('Buscando...');
+                if (datosCargados.length === 0) {
+                    await cargarDatos();
+                    if (datosCargados.length === 0) throw new Error('No hay datos disponibles');
+                }
+                const searchLower = searchInput.toLowerCase();
+                const searchNumerico = searchInput.replace(/\D/g, '');
+                const resultados = datosCargados.filter(p => {
+                    const coincideCedula = searchNumerico && String(p.cedula).replace(/\D/g, '').includes(searchNumerico);
+                    const coincideNombre = (p.nombre || '').toLowerCase().includes(searchLower);
+                    const coincideRegistro = searchNumerico && String(p.registro).replace(/\D/g, '').includes(searchNumerico);
+                    return coincideCedula || coincideNombre || coincideRegistro;
+                });
+                if (resultados.length === 0) throw new Error('No se encontro el afiliado');
+                if (resultados.length === 1) {
+                    await procesarAfiliado(resultados[0], modo);
+                } else {
+                    mostrarResultadosBusqueda(resultados, modo);
+                    ocultarLoader();
+                }
+            } catch (error) {
+                ocultarLoader();
+                Toast.error('Error', error.message);
+            }
+        }
+
+        function mostrarResultadosBusqueda(resultados, modo) {
+            let html = '<p style="margin-bottom:12px;color:var(--text-secondary);font-size:var(--text-sm)">Se encontraron multiples coincidencias:</p>';
+            resultados.forEach(p => {
+                html += `<div class="flex items-center justify-between" style="padding:12px;border-bottom:1px solid var(--border-subtle);background:var(--bg-elevated);margin-bottom:8px;border-radius:var(--radius-md)">
+                    <div><div style="font-weight:600;color:var(--text-primary)">${p.nombre}</div>
+                    <div style="font-size:var(--text-xs);color:var(--text-muted)">Ced: ${Formatters.cedula(p.cedula)} | Reg: ${Formatters.cedula(p.registro)}</div></div>
+                    <button class="btn btn-sm btn-success" onclick="seleccionarDesdeLista('${p.cedula}','${modo}')">Seleccionar</button>
+                </div>`;
+            });
+            document.getElementById('debtModalTitle').textContent = 'Resultados de busqueda';
+            document.getElementById('debtModalContent').innerHTML = html;
+            document.getElementById('debtModal').classList.add('active');
+        }
+
+        window.seleccionarDesdeLista = async function(cedula, modo) {
+            cerrarDebtModal();
+            const persona = datosCargados.find(p => String(p.cedula).replace(/\D/g,'') === String(cedula).replace(/\D/g,''));
+            if (persona) await procesarAfiliado(persona, modo);
+        };
+
+        async function procesarAfiliado(persona, modo) {
+            if (modo === 'con_pagos') {
+                const resultado = await verificarElegibilidad(persona.cedula, persona.nombre, persona.fecha_afiliacion || persona.fecha);
+                if (!resultado.elegible) { ocultarLoader(); return; }
+            }
+            personaEncontrada = persona;
+
+            // Ocultar buscador
+            document.getElementById('restrictionCard').classList.add('hidden');
+            document.getElementById('searchCard').classList.add('hidden');
+            document.getElementById('resultadoCard').classList.add('hidden');
+
+            // Llenar certificado y mostrar vista previa de una
+            actualizarCertificado(persona);
+            mostrarVistaPrevia();
+            ocultarLoader();
+            Toast.success('Verificado', 'Cuotas y certificado al dia');
+
+            // En modo firmas, abrir Vista Previa directamente y ocultar resultado
+            if (accesoConFirmas) {
+                document.getElementById('resultadoCard').classList.add('hidden');
+                mostrarVistaPrevia();
+            }
+        }
+
+        function actualizarCertificado(persona) {
+            document.getElementById('nombre-cert').textContent = persona.nombre;
+            document.getElementById('cedula-cert').textContent = Formatters.cedula(persona.cedula);
+            const fechaAf = persona.fecha || persona.fecha_afiliacion || '';
+            document.getElementById('fecha-cert').textContent = Formatters.fecha(fechaAf);
+            document.getElementById('registro-cert').textContent = Formatters.cedula(persona.registro);
+            document.getElementById('folio-cert').textContent = persona.folio;
+            document.getElementById('renglon-cert').textContent = persona.renglon;
+            document.getElementById('direccion-cert').textContent = persona.direccion;
+            const fechaAMostrar = fechaImpresion ? Formatters.fecha(fechaImpresion) : Formatters.fechaActual();
+            document.getElementById('fecha-emision').textContent = fechaAMostrar;
+        }
+
+        function volverAlBuscador() {
+            accesoConFirmas = false;
+            detenerInactividad();
+            location.reload();
+        }
+
+        // ===== RESTRICCION =====
+        function mostrarRestriccion(nombre, debeCuota, debeCertificado, cedula, fechaAfiliacion) {
+            afiliadoActualParaDetalle = { nombre, cedula, fecha_afiliacion: fechaAfiliacion };
+            let html = `<p style="margin-bottom:12px;color:var(--text-secondary)"><strong>${nombre}</strong> no cumple con los requisitos para obtener el certificado.</p>`;
+            html += '<div style="display:flex;flex-direction:column;gap:12px">';
+            if (debeCuota) {
+                const mesesDeuda = calcularMesesDeuda(cedula, fechaAfiliacion);
+                html += `<div class="debt-item">
+                    <i class="fas fa-calendar-times"></i>
+                    <div style="flex:1;">
+                        <p style="margin:0 0 4px;"><strong>Cuota mensual pendiente</strong></p>
+                        <p style="margin:0;font-size:0.78rem;">Meses pendientes: <strong>${mesesDeuda.length}</strong> | Total: <strong>$${(mesesDeuda.length * 5000).toLocaleString()}</strong></p>
+                        <button class="btn-detail" onclick="mostrarDetalleDeudas('${cedula}','${nombre.replace(/'/g,"\\'")}')"><i class="fas fa-eye"></i> Ver meses</button>
+                    </div>
+                </div>`;
+            }
+            if (debeCertificado) {
+                html += `<div class="debt-item">
+                    <i class="fas fa-file-alt"></i>
+                    <div style="flex:1;">
+                        <p style="margin:0 0 4px;"><strong>Certificado no pagado</strong></p>
+                        <p style="margin:0;font-size:0.78rem;">Valor: <strong>$20,000 COP</strong></p>
+                    </div>
+                </div>`;
+            }
+            html += '</div>';
+            document.getElementById('restrictionContent').innerHTML = html;
+            document.getElementById('restrictionCard').classList.remove('hidden');
+            document.getElementById('searchCard').classList.add('hidden');
+            document.getElementById('resultadoCard').classList.add('hidden');
+            document.getElementById('optionsCard').classList.add('hidden');
+        }
+
+        window.mostrarDetalleDeudas = function(cedula, nombre) {
+            const mesesDeuda = calcularMesesDeuda(cedula, afiliadoActualParaDetalle.fecha_afiliacion);
+            if (mesesDeuda.length === 0) {
+                document.getElementById('debtModalTitle').textContent = `${nombre} - Estado de Cuenta`;
+                document.getElementById('debtModalContent').innerHTML = '<div style="text-align:center;padding:20px"><i class="fas fa-check-circle" style="font-size:3rem;color:var(--color-success)"></i><p style="margin-top:12px;color:var(--color-success)">No tiene meses pendientes</p></div>';
+            } else {
+                let html = `<p style="margin-bottom:12px;color:var(--text-secondary);font-size:var(--text-sm)">Meses pendientes desde ${afiliadoActualParaDetalle.fecha_afiliacion}:</p><div class="month-list">`;
+                mesesDeuda.forEach(m => { html += `<div class="month-item"><span class="month-name">${m.nombre} ${m.anio}</span><span class="month-value">$${m.valor.toLocaleString()}</span></div>`; });
+                html += `</div><div class="total-debt">Total adeudado: $${(mesesDeuda.length * 5000).toLocaleString()}</div>`;
+                document.getElementById('debtModalTitle').textContent = `${nombre} - Meses Pendientes`;
+                document.getElementById('debtModalContent').innerHTML = html;
+            }
+            document.getElementById('debtModal').classList.add('active');
+        };
+
+        function cerrarDebtModal() { document.getElementById('debtModal').classList.remove('active'); }
+
+        // ===== VISTA PREVIA / OPCIONES =====
+        function mostrarVistaPrevia() {
+            const cert = document.getElementById('contenido-certificado');
+            cert.style.cssText = 'position:relative; left:0; top:0; display:block; width:216mm; min-height:279mm; margin:0 auto;';
+            document.querySelector('.content-area').style.padding = '0';
+            document.querySelector('.content-area').style.background = 'transparent';
+            document.querySelector('.page-content').style.background = 'transparent';
+            document.querySelector('.page-content').style.maxWidth = 'none';
+            document.querySelector('.page-content').style.animation = 'none';
+            document.body.style.background = accesoConFirmas ? "url('../assets/images/fondo-firmas.png') center/cover no-repeat" : '#0a0e1a';
+            document.getElementById('resultadoCard').classList.add('hidden');
+            document.getElementById('btnVistaPrevia').classList.add('hidden');
+            document.getElementById('btnOcultarVista').classList.remove('hidden');
+            document.getElementById('optionsCard').classList.remove('hidden');
+            setTimeout(() => { cert.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
+        }
+
+        function ocultarVistaPrevia() {
+            if (accesoConFirmas) { volverAlBuscador(); return; }
+            const cert = document.getElementById('contenido-certificado');
+            cert.style.cssText = 'position:absolute; left:-9999px; top:0; display:none;';
+            document.querySelector('.content-area').style.padding = '';
+            document.querySelector('.content-area').style.background = '';
+            document.querySelector('.page-content').style.background = '';
+            document.querySelector('.page-content').style.maxWidth = '';
+            document.querySelector('.page-content').style.animation = '';
+            document.body.style.background = '';
+            document.getElementById('btnVistaPrevia').classList.remove('hidden');
+            document.getElementById('btnOcultarVista').classList.add('hidden');
+            document.getElementById('optionsCard').classList.add('hidden');
+            document.getElementById('searchCard').classList.remove('hidden');
+            document.getElementById('resultadoCard').classList.add('hidden');
+        }
+
+        // ===== EDICION INLINE =====
+        function mostrarEdicion() {
+            if (!personaEncontrada) return;
+            const grid = document.getElementById('resultadoGrid');
+            grid.innerHTML = `
+                <div class="resultado-item"><label>Nombre</label><input type="text" class="input" id="editNombre" value="${personaEncontrada.nombre}"></div>
+                <div class="resultado-item"><label>Cedula</label><input type="text" class="input" id="editCedula" value="${personaEncontrada.cedula}"></div>
+                <div class="resultado-item"><label>Fecha Afiliacion</label><input type="text" class="input" id="editFechaAfiliacion" value="${personaEncontrada.fecha_afiliacion || ''}"></div>
+                <div class="resultado-item"><label>Registro</label><input type="text" class="input" id="editRegistro" value="${personaEncontrada.registro}"></div>
+                <div class="resultado-item"><label>Folio</label><input type="text" class="input" id="editFolio" value="${personaEncontrada.folio}"></div>
+                <div class="resultado-item"><label>Renglon</label><input type="text" class="input" id="editRenglon" value="${personaEncontrada.renglon}"></div>
+                <div class="resultado-item"><label>Direccion</label><input type="text" class="input" id="editDireccion" value="${personaEncontrada.direccion}"></div>
+                <div class="resultado-item"><label>Telefono</label><input type="text" class="input" id="editTelefono" value="${personaEncontrada.telefono || ''}"></div>
+                <div class="resultado-item"><label>Fecha Emision</label><input type="text" class="input" id="editFechaEmision" value="${fechaImpresion || new Date().toISOString().split('T')[0]}"></div>
+            `;
+            document.getElementById('btnGroupEdicion').classList.remove('hidden');
+            document.getElementById('resultadoCard').classList.remove('hidden');
+            document.getElementById('optionsCard').classList.add('hidden');
+            document.getElementById('contenido-certificado').style.cssText = 'position:absolute; left:-9999px; top:0; display:none;';
+            document.getElementById('btnVistaPrevia').classList.remove('hidden');
+            document.getElementById('btnOcultarVista').classList.add('hidden');
+            document.querySelector('.content-area').style.padding = '';
+            document.querySelector('.content-area').style.background = '';
+            document.querySelector('.page-content').style.background = '';
+            document.querySelector('.page-content').style.maxWidth = '';
+            document.querySelector('.page-content').style.animation = '';
+            document.body.style.background = '';
+        }
+
+        function guardarCambios() {
+            personaEncontrada.nombre = document.getElementById('editNombre').value;
+            personaEncontrada.cedula = document.getElementById('editCedula').value;
+            personaEncontrada.fecha_afiliacion = document.getElementById('editFechaAfiliacion').value;
+            personaEncontrada.direccion = document.getElementById('editDireccion').value;
+            personaEncontrada.telefono = document.getElementById('editTelefono').value;
+            personaEncontrada.registro = document.getElementById('editRegistro').value;
+            personaEncontrada.folio = document.getElementById('editFolio').value;
+            personaEncontrada.renglon = document.getElementById('editRenglon').value;
+            fechaImpresion = document.getElementById('editFechaEmision').value;
+            actualizarCertificado(personaEncontrada);
+            document.getElementById('resultadoCard').classList.add('hidden');
+            document.getElementById('btnGroupEdicion').classList.add('hidden');
+            mostrarVistaPrevia();
+            Toast.success('Guardado', 'Cambios aplicados al certificado');
+        }
+
+        function cancelarEdicion() {
+            document.getElementById('resultadoCard').classList.add('hidden');
+            document.getElementById('btnGroupEdicion').classList.add('hidden');
+            mostrarVistaPrevia();
+        }
+
+        function mostrarResultado(persona) {
+            const grid = document.getElementById('resultadoGrid');
+            grid.innerHTML = `
+                <div class="resultado-item"><label>Nombre</label><span>${persona.nombre}</span></div>
+                <div class="resultado-item"><label>Cedula</label><span>${Formatters.cedula(persona.cedula)}</span></div>
+                <div class="resultado-item"><label>Fecha Afiliacion</label><span>${Formatters.fecha(persona.fecha || persona.fecha_afiliacion || '')}</span></div>
+                <div class="resultado-item"><label>Registro</label><span>${Formatters.cedula(persona.registro)}</span></div>
+                <div class="resultado-item"><label>Folio</label><span>${persona.folio}</span></div>
+                <div class="resultado-item"><label>Renglon</label><span>${persona.renglon}</span></div>
+                <div class="resultado-item"><label>Direccion</label><span>${persona.direccion}</span></div>
+                <div class="resultado-item"><label>Telefono</label><span>${persona.telefono || '-'}</span></div>
+            `;
+            document.getElementById('btnEditar').classList.remove('hidden');
+            document.getElementById('btnGroupEdicion').classList.add('hidden');
+        }
+
+        // ===== EXPORTACION =====
+        async function capturarCertificado() {
+            const el = document.getElementById('contenido-certificado');
+            el.style.cssText = 'position:absolute; left:0; top:0; display:block; width:216mm; min-height:279mm;';
+            await new Promise(r => setTimeout(r, 500));
+            return await html2canvas(el, { scale: 3, useCORS: true, allowTaint: false, backgroundColor: '#FFFFFF', logging: false, width: 816, windowWidth: 816 });
+        }
+
+        async function descargarPNG() {
+            try {
+                mostrarLoader('Generando PNG...');
+                const canvas = await capturarCertificado();
+                const link = document.createElement('a');
+                link.download = `certificado_${personaEncontrada.cedula}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                Toast.success('PNG Descargado', `certificado_${personaEncontrada.cedula}.png`);
+            } catch (e) { Toast.error('Error', e.message); }
+            finally {
+                ocultarLoader();
+                if (accesoConFirmas) { volverAlBuscador(); return; }
+                mostrarVistaPrevia();
+            }
+        }
+
+        async function descargarPDF() {
+            try {
+                mostrarLoader('Generando PDF...');
+                const el = document.getElementById('contenido-certificado');
+                el.style.cssText = 'position:absolute; left:0; top:0; display:block; width:216mm; min-height:279mm;';
+                await new Promise(r => setTimeout(r, 500));
+                const canvas = await html2canvas(el, { scale: 7, useCORS: true, allowTaint: false, backgroundColor: '#FFFFFF', logging: false, width: 816, windowWidth: 816 });
+                el.style.cssText = 'position:absolute; left:-9999px; top:0; display:none;';
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+                pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 216, 279);
+                pdf.save(`certificado_${personaEncontrada.cedula}.pdf`);
+                Toast.success('PDF Descargado', `certificado_${personaEncontrada.cedula}.pdf`);
+            } catch (e) { Toast.error('Error', e.message); }
+            finally {
+                ocultarLoader();
+                if (accesoConFirmas) { volverAlBuscador(); return; }
+                mostrarVistaPrevia();
+            }
+        }
+
+        async function imprimirCertificado() {
+            try {
+                mostrarLoader('Generando imagen...');
+                const el = document.getElementById('contenido-certificado');
+                el.style.cssText = 'position:absolute; left:0; top:0; display:block; width:216mm; min-height:279mm;';
+                await new Promise(r => setTimeout(r, 600));
+
+                const canvas = await html2canvas(el, {
+                    scale: 3, useCORS: true, allowTaint: false,
+                    backgroundColor: '#FFFFFF', logging: false,
+                    width: 816, windowWidth: 816
+                });
+                el.style.cssText = 'position:absolute; left:-9999px; top:0; display:none;';
+
+                const imgData = canvas.toDataURL('image/png');
+                mostrarLoader('Imprimiendo...');
+
+                if (window.electronAPI && window.electronAPI.printPage) {
+                    await window.electronAPI.printPage(imgData);
+                    Toast.success('Impresion', 'Documento enviado a la impresora');
+                } else {
+                    const printWindow = window.open('', '_blank');
+                    printWindow.document.write('<!DOCTYPE html><html><head><title>Imprimir Certificado</title><style>@page{margin:0;}body{margin:0;padding:0;display:flex;justify-content:center;align-items:flex-start;}img{max-width:100%;height:auto;}@media print{body{margin:0;}img{width:100%;}}</style></head><body><img src="' + imgData + '" onload="window.print();" /></body></html>');
+                    printWindow.document.close();
+                }
+
+            } catch (e) {
+                Toast.error('Error', e.message);
+            } finally {
+                ocultarLoader();
+                if (accesoConFirmas) { volverAlBuscador(); return; }
+                mostrarVistaPrevia();
+            }
+        }
+
+        // ===== WHATSAPP =====
+        function abrirWhatsAppModal() {
+            document.getElementById('whatsappNumber').value = personaEncontrada.telefono || '';
+            document.getElementById('whatsappModal').classList.add('active');
+        }
+        function cerrarWhatsAppModal() { document.getElementById('whatsappModal').classList.remove('active'); }
+        function enviarWhatsApp() {
+            const num = document.getElementById('whatsappNumber').value.trim();
+            if (!num) { Toast.warning('Atencion', 'Ingrese un numero de telefono'); return; }
+            window.open(`https://wa.me/57${num}`, '_blank');
+            cerrarWhatsAppModal();
+        }
+
+        // ===== UTILIDADES =====
+        function mostrarLoader(texto = 'Procesando...') {
+            document.getElementById('loadingText').textContent = texto;
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+        function ocultarLoader() { document.getElementById('loadingOverlay').classList.remove('active'); }
+
+        // ===== CERTIFICADO CON FIRMAS (ACCESO CON CONTRASEÑA) =====
+        const PASSWORD_CERT = '42775182';
+        let personaFirmas = null;
+        let accesoConFirmas = false;
+        let inactivityTimer = null;
+        const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutos
+
+        function abrirPasswordModal() {
+            document.getElementById('inputPassword').value = '';
+            document.getElementById('passwordModal').classList.add('active');
+            setTimeout(() => document.getElementById('inputPassword').focus(), 300);
+        }
+
+        function iniciarInactividad() {
+            detenerInactividad();
+            const eventos = ['mousemove', 'mousedown', 'keypress', 'touchstart', 'scroll'];
+            eventos.forEach(evt => document.addEventListener(evt, resetInactividad));
+            inactivityTimer = setTimeout(volverPorInactividad, INACTIVITY_TIMEOUT);
+        }
+
+        function detenerInactividad() {
+            if (inactivityTimer) clearTimeout(inactivityTimer);
+            const eventos = ['mousemove', 'mousedown', 'keypress', 'touchstart', 'scroll'];
+            eventos.forEach(evt => document.removeEventListener(evt, resetInactividad));
+        }
+
+        function resetInactividad() {
+            if (inactivityTimer) clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(volverPorInactividad, INACTIVITY_TIMEOUT);
+        }
+
+        function volverPorInactividad() {
+            detenerInactividad();
+            Toast.warning('Sesion expirada', 'Volviendo a Certificados');
+            volverAlBuscador();
+        }
+
+        function confirmarPassword() {
+            const pass = document.getElementById('inputPassword').value;
+            if (pass === PASSWORD_CERT) {
+                document.getElementById('passwordModal').classList.remove('active');
+                document.getElementById('passwordError').style.display = 'none';
+                accesoConFirmas = true;
+                document.body.classList.add('modo-firmas');
+                document.getElementById('contenido-certificado').classList.add('mostrar-firmas');
+                iniciarInactividad();
+                buscarUsuario('firmas');
+            } else {
+                document.getElementById('passwordError').style.display = 'block';
+                document.getElementById('inputPassword').value = '';
+                document.getElementById('inputPassword').focus();
+            }
+        }
+
+        document.getElementById('inputPassword').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') confirmarPassword();
+        });
+
+    </script>
+</body>
+</html>
